@@ -80,20 +80,12 @@ Playwright Engine ──► 7 AI Platforms ──► reports/
 > Skills are namespaced: `/multi-ai-skills:orchestrator`, `/multi-ai-skills:solution-researcher`, etc.
 > Run `/reload-plugins` if skills don't appear immediately.
 
-### 3 — Install Python dependencies
+Python dependencies (`playwright`, `openpyxl`, Chromium browser) are **installed automatically** on the first session start via a `SessionStart` hook. No manual setup required.
 
-After the plugin is installed, run the setup script once from the plugin's cached directory:
-
-```bash
-# Find where Claude Code cached the plugin:
-find ~/.claude/plugins/cache -name "install.sh" | head -1 | xargs dirname
-
-# Then run setup (replace <path> with the result above):
-bash <path>/install.sh
-
-# Or for agent fallback support:
-bash <path>/install.sh --with-fallback
-```
+> **Agent fallback (optional):** To enable the vision-based browser-use fallback, run manually:
+> ```bash
+> bash "$(find ~/.claude/plugins/cache -name install.sh | head -1)" --with-fallback
+> ```
 
 ### Alternative — Local / Dev Install
 
@@ -108,11 +100,11 @@ bash install.sh --with-fallback
 claude --plugin-dir ./multi-ai-skills
 ```
 
-### 2 — Log in to platforms
+### 3 — Log in to platforms
 
 Open Chrome and log in to each of the 7 AI platforms above. The engine re-uses your existing Chrome profile — no credentials are stored by this tool.
 
-### 3 — Set optional API keys
+### 4 — Set optional API keys
 
 ```bash
 # ~/.zshrc or ~/.bashrc
