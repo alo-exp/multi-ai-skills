@@ -62,14 +62,40 @@ Playwright Engine ──► 7 AI Platforms ──► reports/
 
 ## Quick Start
 
-### 1 — Install (Plugin)
+### 1 — Prerequisites
 
-```bash
-# Via Claude Code plugin install (deps auto-installed by PostInstall hook):
-/plugin install alo-exp/multi-ai-skills
+- Claude Code **v1.0.33 or later** — run `claude --version` to check; update with `brew upgrade claude-code` or `npm update -g @anthropic-ai/claude-code`
+- Python 3.10+, Google Chrome installed
+
+### 2 — Install via Claude Code Plugin Manager
+
+```shell
+# Step 1 — register the repo as a marketplace (one-time):
+/plugin marketplace add alo-exp/multi-ai-skills
+
+# Step 2 — install the plugin from that marketplace:
+/plugin install multi-ai-skills@multi-ai-skills
 ```
 
-### 1 — Install (Manual / Dev)
+> Skills are namespaced: `/multi-ai-skills:orchestrator`, `/multi-ai-skills:solution-researcher`, etc.
+> Run `/reload-plugins` if skills don't appear immediately.
+
+### 3 — Install Python dependencies
+
+After the plugin is installed, run the setup script once from the plugin's cached directory:
+
+```bash
+# Find where Claude Code cached the plugin:
+find ~/.claude/plugins/cache -name "install.sh" | head -1 | xargs dirname
+
+# Then run setup (replace <path> with the result above):
+bash <path>/install.sh
+
+# Or for agent fallback support:
+bash <path>/install.sh --with-fallback
+```
+
+### Alternative — Local / Dev Install
 
 ```bash
 git clone https://github.com/alo-exp/multi-ai-skills.git
@@ -77,6 +103,9 @@ cd multi-ai-skills
 bash install.sh          # installs pip deps + Playwright Chromium + .env template
 # optional agent fallback:
 bash install.sh --with-fallback
+
+# Load directly without marketplace registration:
+claude --plugin-dir ./multi-ai-skills
 ```
 
 ### 2 — Log in to platforms

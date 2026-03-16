@@ -1,0 +1,24 @@
+{
+  "name": "multi-ai-skills",
+  "owner": {
+    "name": "alo-exp"
+  },
+  "metadata": {
+    "description": "Submit research prompts to 7 AI platforms simultaneously, synthesise results, and produce structured reports — all from Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "multi-ai-skills",
+      "source": ".",
+      "description": "Submit research prompts to 7 AI platforms simultaneously (Claude.ai, ChatGPT, Copilot, Perplexity, Grok, DeepSeek, Gemini), synthesise results, maintain capability comparison matrices, and produce landscape reports — all from Claude Code.",
+      "version": "4.0.0",
+      "author": {
+        "name": "alo-exp"
+      },
+      "homepage": "https://github.com/alo-exp/multi-ai-skills",
+      "repository": "https://github.com/alo-exp/multi-ai-skills",
+      "license": "MIT",
+      "keywords": ["multi-ai", "orchestration", "research", "playwright", "comparison-matrix", "rate-limiting", "deep-research"]
+    }
+  ]
+}
