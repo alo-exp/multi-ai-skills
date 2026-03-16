@@ -1,4 +1,0 @@
-{
-  "_note": "PostInstall is not a supported Claude Code hook event. Run install.sh manually after cloning: bash install.sh",
-  "hooks": {}
-}

@@ -18,5 +18,6 @@
     "rate-limiting",
     "deep-research"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
 }

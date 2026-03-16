@@ -29,6 +29,9 @@ env/
 # pytest cache
 .pytest_cache/
 
+# Plugin install marker (machine-local)
+.installed
+
 # Secrets / API keys
 .env
 *.env
