@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-ai-skills"
+version = "4.0.0"
+description = "Multi-AI orchestration platform: submit prompts to 7 AI platforms simultaneously, manage rate limits, operate XLSX comparison matrices, and synthesise results — packaged as a Claude Code plugin."
+readme = "USER-GUIDE.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+keywords = ["claude-plugin", "multi-ai", "orchestration", "playwright", "research"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# Runtime dependencies for the plugin's Python scripts
+dependencies = [
+    "playwright>=1.40.0",
+    "openpyxl>=3.1.0",
+]
+
+[project.optional-dependencies]
+# Agent fallback via browser-use (requires Python ≥3.11 — install in a separate venv)
+fallback = [
+    "browser-use==0.12.2",
+    "anthropic>=0.76.0",
+    "fastmcp>=2.0.0",
+]
+
+# Development / testing
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.urls]
+Repository = "https://github.com/alo-exp/multi-ai-skills"
+"Bug Tracker" = "https://github.com/alo-exp/multi-ai-skills/issues"
+"User Guide" = "https://github.com/alo-exp/multi-ai-skills/blob/main/USER-GUIDE.md"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["skills*", "tests*", "domains*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.md", "*.json", "*.txt", "*.html", "*.py"]

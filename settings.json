@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(python3 skills/orchestrator/engine/orchestrator.py:*)",
+      "Bash(python3 skills/comparator/matrix_ops.py:*)",
+      "Bash(python3 skills/comparator/matrix_builder.py:*)",
+      "Bash(python3 skills/landscape-researcher/launch_report.py:*)",
+      "Bash(python3 skills/orchestrator/engine/collate_responses.py:*)",
+      "Bash(python3 -m pytest tests/:*)",
+      "Bash(python3 -m py_compile:*)"
+    ]
+  }
+}

@@ -26,6 +26,9 @@ env/
 # Temp test output
 /tmp/
 
+# pytest cache
+.pytest_cache/
+
 # Secrets / API keys
 .env
 *.env
