@@ -18,6 +18,5 @@
     "rate-limiting",
     "deep-research"
   ],
-  "skills": "./skills/",
-  "hooks": "./.claude-plugin/hooks.json"
+  "skills": "./skills/"
 }

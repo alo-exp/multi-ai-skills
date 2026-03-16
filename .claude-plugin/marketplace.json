@@ -9,7 +9,10 @@
   "plugins": [
     {
       "name": "multi-ai-skills",
-      "source": ".",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/alo-exp/multi-ai-skills.git"
+      },
       "description": "Submit research prompts to 7 AI platforms simultaneously (Claude.ai, ChatGPT, Copilot, Perplexity, Grok, DeepSeek, Gemini), synthesise results, maintain capability comparison matrices, and produce landscape reports — all from Claude Code.",
       "version": "4.0.0",
       "author": {

@@ -1,13 +1,4 @@
 {
-  "hooks": [
-    {
-      "event": "PostInstall",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash ${CLAUDE_PLUGIN_ROOT}/install.sh"
-        }
-      ]
-    }
-  ]
+  "_note": "PostInstall is not a supported Claude Code hook event. Run install.sh manually after cloning: bash install.sh",
+  "hooks": {}
 }
