@@ -1,6 +1,6 @@
 {
   "name": "multai",
-  "version": "4.0.1",
+  "version": "0.1.0",
   "description": "MultAI — Submit research prompts to 7 AI platforms simultaneously (Claude.ai, ChatGPT, Copilot, Perplexity, Grok, DeepSeek, Gemini), synthesise results, maintain capability comparison matrices, and produce landscape reports — all from Claude Code.",
   "author": {
     "name": "alo-exp",

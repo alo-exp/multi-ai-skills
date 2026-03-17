@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "multi-ai-skills"
-version = "4.0.0"
+version = "0.1.0"
 description = "Multi-AI orchestration platform: submit prompts to 7 AI platforms simultaneously, manage rate limits, operate XLSX comparison matrices, and synthesise results — packaged as a Claude Code plugin."
 readme = "USER-GUIDE.md"
 license = { text = "MIT" }

@@ -14,7 +14,7 @@
         "url": "https://github.com/alo-exp/multai.git"
       },
       "description": "MultAI — Submit research prompts to 7 AI platforms simultaneously (Claude.ai, ChatGPT, Copilot, Perplexity, Grok, DeepSeek, Gemini), synthesise results, maintain capability comparison matrices, and produce landscape reports — all from Claude Code.",
-      "version": "4.0.1",
+      "version": "0.1.0",
       "author": {
         "name": "alo-exp"
       },
