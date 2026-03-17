@@ -1,4 +1,4 @@
-# multi-ai-skills
+# MultAI
 
 > **Submit a research prompt to 7 AI platforms simultaneously — all from Claude Code.**
 
