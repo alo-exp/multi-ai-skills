@@ -1,7 +1,7 @@
 {
   "name": "multai",
   "owner": {
-    "name": "alo-exp"
+    "name": "Ālo Labs"
   },
   "metadata": {
     "description": "MultAI — Submit research prompts to 7 AI platforms simultaneously, synthesize results, and produce structured reports — all from Claude Code."
@@ -16,7 +16,8 @@
       "description": "MultAI — Submit research prompts to 7 AI platforms simultaneously (Claude.ai, ChatGPT, Copilot, Perplexity, Grok, DeepSeek, Gemini), synthesize results, maintain capability comparison matrices, and produce landscape reports — all from Claude Code.",
       "version": "0.1.0",
       "author": {
-        "name": "alo-exp"
+        "name": "Ālo Labs",
+        "url": "https://alolabs.dev"
       },
       "homepage": "https://github.com/alo-exp/multai",
       "repository": "https://github.com/alo-exp/multai",
