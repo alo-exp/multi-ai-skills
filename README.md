@@ -2,7 +2,7 @@
 
 > **Submit a research prompt to 7 AI platforms simultaneously — all from Claude Code.**
 
-`multi-ai-skills` is a Claude Code plugin that automates multi-AI research workflows. It uses Playwright CDP automation to submit prompts to Claude.ai, ChatGPT, Microsoft Copilot, Perplexity, Grok, DeepSeek, and Google Gemini in parallel, extracts their responses, and synthesises the results into structured deliverables — market landscape reports, solution capability matrices, comparison spreadsheets, and more.
+`multi-ai-skills` is a Claude Code plugin that automates multi-AI research workflows. It uses Playwright CDP automation to submit prompts to Claude.ai, ChatGPT, Microsoft Copilot, Perplexity, Grok, DeepSeek, and Google Gemini in parallel, extracts their responses, and synthesizes the results into structured deliverables — market landscape reports, solution capability matrices, comparison spreadsheets, and more.
 
 ---
 
@@ -136,7 +136,7 @@ The orchestrator announces its routing decision before proceeding — you can ov
 
 ### `orchestrator` — Intelligent Router + Engine Owner
 
-The entry point for all workflows. Phase 0 analyses your intent and routes to the correct specialist skill. For direct multi-AI queries it owns the full pipeline itself.
+The entry point for all workflows. Phase 0 analyzes your intent and routes to the correct specialist skill. For direct multi-AI queries it owns the full pipeline itself.
 
 **Triggers:** any research or comparison prompt; explicitly routing to another skill
 
@@ -202,7 +202,7 @@ Maintains and operates the capability comparison matrix spreadsheet.
 
 ### `consolidator` — Response Synthesis
 
-Synthesises raw multi-AI responses into a single structured report. Called automatically by other skills; rarely invoked directly.
+Synthesizes raw multi-AI responses into a single structured report. Called automatically by other skills; rarely invoked directly.
 
 **With a consolidation guide:** the guide is the sole structural authority — used by landscape-researcher (9-section guide) and solution-researcher (CIR guide).
 

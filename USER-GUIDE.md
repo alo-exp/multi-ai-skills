@@ -31,7 +31,7 @@
 
 ## 1. Overview
 
-**Multi-AI Skills** is a local desktop automation platform that submits research prompts to multiple AI services simultaneously — Claude.ai, ChatGPT, Microsoft Copilot, Perplexity, Grok, DeepSeek, and Google Gemini — extracts their responses via Playwright CDP automation, and synthesises the results into structured deliverables.
+**Multi-AI Skills** is a local desktop automation platform that submits research prompts to multiple AI services simultaneously — Claude.ai, ChatGPT, Microsoft Copilot, Perplexity, Grok, DeepSeek, and Google Gemini — extracts their responses via Playwright CDP automation, and synthesizes the results into structured deliverables.
 
 It is invoked entirely through **Claude Code** using a set of five skills, each targeting a different research workflow.
 
@@ -318,7 +318,7 @@ The primary entry point. Routes all requests and owns the Playwright engine.
 | **2** | Pre-flight: rate limit check, budget display |
 | **3** | Engine invoked: `orchestrator.py --task-name …` |
 | **4** | Results reviewed: per-platform status table |
-| **5** | Consolidator synthesises responses into final answer |
+| **5** | Consolidator synthesizes responses into final answer |
 | **6** | Self-improve: SKILL.md Run Log updated |
 
 #### Override Routing
@@ -494,7 +494,7 @@ python3 skills/comparator/matrix_builder.py --config build.json --out matrix.xls
 
 **File:** `skills/consolidator/SKILL.md`
 
-Synthesises raw AI responses from the archive into a structured final deliverable.
+Synthesizes raw AI responses from the archive into a structured final deliverable.
 
 The consolidator is invoked automatically by other skills — you rarely need to invoke it directly. When invoked directly, provide:
 
@@ -705,7 +705,7 @@ python3 skills/orchestrator/engine/orchestrator.py --prompt "x" --budget
 1. **Pre-flight check** — before each platform runs, the limiter checks: budget remaining, cooldown window, daily cap, exponential backoff (after rate-limited events)
 2. **Cooldown** — after each successful request, the platform is locked for its cooldown period (e.g. 5 min for Claude.ai free tier)
 3. **Budget window** — requests older than the rolling window (18000s / 5h) are pruned and no longer count against the budget
-4. **Rate-limited backoff** — if a platform returns a rate-limit banner, it is penalised with exponential backoff (2×, 4×, 8×… up to 16× the normal cooldown)
+4. **Rate-limited backoff** — if a platform returns a rate-limit banner, it is penalized with exponential backoff (2×, 4×, 8×… up to 16× the normal cooldown)
 5. **Staggered launch** — platforms with more remaining budget launch first; over-budget platforms are deferred
 
 ### Bypassing Rate Limits
