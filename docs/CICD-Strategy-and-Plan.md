@@ -101,17 +101,19 @@ bash -n install.sh
 cd skills/orchestrator/engine && python3 -m pytest ../../../tests/ -v --tb=short
 ```
 
-Test modules (v4.1):
+Test modules (v4.2):
 - `tests/test_prompt_echo.py` — 8 tests (UT-PE-01 to UT-PE-08)
 - `tests/test_rate_limiter.py` — 14 tests (UT-RL-01 to UT-RL-14)
 - `tests/test_collate_responses.py` — 7 tests (UT-CR-01 to UT-CR-07)
 - `tests/test_config.py` — 7 tests (UT-CF-01 to UT-CF-07)
 - `tests/test_orchestrator_args.py` — 11 tests (UT-OR-01 to UT-OR-11)
 - `tests/test_matrix_ops.py` — 9 tests (UT-MX-01 to UT-MX-09)
+- `tests/test_matrix_builder.py` — 9 tests (UT-MB-01 to UT-MB-09)
+- `tests/test_utils.py` — 9 tests (UT-UT-01 to UT-UT-09)
 - `tests/test_launch_report.py` — 2 tests (TC-LAUNCH-1 to TC-LAUNCH-2)
 - `tests/test_setup_bootstrap.py` — 17 tests (TC-SETUP-1/3, TC-VENV-1, TC-HOOK-1/2, TC-LAUNCH-1/2)
 
-**Total unit tests:** 75
+**Total unit tests:** 93
 **Duration:** ~10s
 **Gate:** All tests pass
 

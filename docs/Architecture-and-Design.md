@@ -801,7 +801,7 @@ Each skill follows a **Self-Improve** pattern: after every successful run, the s
 
 **Scope boundary:** A skill only modifies files within its own directory (`skills/{skill-name}/`). It never edits another skill's files, the engine, or domain knowledge outside the enrichment protocol described in Section 3.7.
 
-**Purpose:** This creates a continuous improvement loop without human intervention. Each run refines the skill's heuristics, prompt wording, and operational parameters. The cumulative run log also serves as an **audit trail** -- reviewers can trace when and why a skill changed its own behaviour. Because entries are append-only and timestamped, no historical context is lost, and regressions can be traced back to the specific run that introduced them.
+**Purpose:** This creates a continuous improvement loop without human intervention. Each run refines the skill's heuristics, prompt wording, and operational parameters. The cumulative run log also serves as an **audit trail** -- reviewers can trace when and why a skill changed its own behavior. Because entries are append-only and timestamped, no historical context is lost, and regressions can be traced back to the specific run that introduced them.
 
 ### 6.11 Dependency Bootstrap (v4.1)
 

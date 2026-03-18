@@ -1,7 +1,7 @@
 # Test Strategy and Plan
 
 **Project:** Multi-AI Orchestrator Platform
-**Version:** 4.1
+**Version:** 4.2
 **Date:** 2026-03-18
 
 | Version | Date | Summary |
@@ -12,6 +12,7 @@
 | 3.2 | 2026-03-14 | Added task-name and collation tests (collate_responses, --task-name routing) |
 | 4.0 | 2026-03-16 | Added routing, landscape-researcher, launch_report, preview.html, domain enrichment, and self-improvement tests; updated all engine path references |
 | 4.1 | 2026-03-18 | Added setup bootstrap tests (TC-SETUP-1–3), plugin hook tests (TC-HOOK-1–2), venv check test (TC-VENV-1) |
+| 4.2 | 2026-03-18 | Added utils.py tests (UT-UT-01–09), matrix_builder.py tests (UT-MB-01–09), coverage matrix, known gaps section, Makefile, fixture manifest fix; total 93 automated tests |
 
 ---
 
@@ -20,11 +21,12 @@
 ### 1.1 Goals
 
 1. Verify correctness of the orchestration engine (CLI, prompt-echo detection, rate limiting, output routing, auto-collation)
-2. Ensure no regression in platform automation behaviour after each change
+2. Ensure no regression in platform automation behavior after each change
 3. Validate all skill invocation contracts (orchestrator, consolidator, comparator, solution-researcher, landscape-researcher)
 4. Verify matrix XLSX operations are deterministic, idempotent, and respect the 6 Golden Rules
 5. Confirm rate limiting enforces budgets and cooldowns correctly across sessions
 6. Confirm extensibility: new task types and domains work without engine changes
+7. Achieve full unit-test coverage for all pure-function modules (utils, matrix_builder, prompt_echo, rate_limiter, collate_responses, config, CLI args)
 
 ### 1.2 Test Pyramid
 
@@ -76,20 +78,20 @@ All tests must use a temporary state file path to avoid touching the real `~/.ch
 
 | Test ID | Test Case | Input | Expected Output |
 |---------|-----------|-------|-----------------|
-| UT-RL-01 | Fresh state allows all platforms | New `RateLimiter`, no state file | `preflight_check(any_platform, "REGULAR").allowed == True` |
-| UT-RL-02 | Budget exhausted blocks platform | Record `max_requests` usages within window | `preflight_check().allowed == False`, reason contains "budget" |
-| UT-RL-03 | Cooldown blocks immediately after request | Record 1 usage; check again instantly | `allowed == False`, reason contains "Cooldown" |
-| UT-RL-04 | Cooldown clears after `cooldown_seconds` | Record usage; manually advance time past cooldown | `allowed == True` |
-| UT-RL-05 | Exponential backoff after rate_limited event | Record `status=rate_limited`; preflight | `wait_seconds >= cooldown * 2` |
-| UT-RL-06 | Backoff caps at 16× | Record 5+ rate_limited events | `wait_seconds <= cooldown * 16` |
-| UT-RL-07 | State persists to JSON and reloads | Save state; create new `RateLimiter` from same file; load_state | Usage records present after reload |
-| UT-RL-08 | State write is atomic (tmp + rename) | Inspect write: temp file used then renamed | No partial writes visible |
-| UT-RL-09 | Expired records pruned on load | Add records older than `window_seconds`; reload | Expired records not counted |
-| UT-RL-10 | Daily cap enforced | `daily_cap=3`; record 3 usages today | 4th preflight blocked with daily cap reason |
-| UT-RL-11 | Staggered order: most budget first | 3 platforms: 1 used, 1 at 50%, 1 fresh | Fresh platform at delay=0, used platform last |
-| UT-RL-12 | Rate-limited platform penalized in stagger order | 1 platform recently rate-limited | Rate-limited platform sorted last |
-| UT-RL-13 | Budget summary returns correct remaining count | Record 2 usages on claude_ai | `summary["claude_ai"]["remaining"] == total - 2` |
-| UT-RL-14 | `free` and `paid` tier configs differ | Compare `RateLimiter("free")` vs `RateLimiter("paid")` budgets | Paid has higher `max_requests` |
+| UT-RL-01 | Default tier is "free" | New `RateLimiter`, no args | `limiter.tier == "free"` |
+| UT-RL-02 | Custom tier changes config | `RateLimiter(tier="paid")` | `limiter.tier == "paid"` |
+| UT-RL-03 | Load from empty/missing state file | New `RateLimiter`, no state file | State loads without error; empty records |
+| UT-RL-04 | Save state and reload preserves records | Save state; create new `RateLimiter` from same file; load_state | Usage records present after reload |
+| UT-RL-05 | Fresh preflight allows all platforms | New `RateLimiter`, no state file | `preflight_check(any_platform, "REGULAR").allowed == True` |
+| UT-RL-06 | Preflight returns budget info | Fresh limiter; preflight on any platform | Result contains budget remaining info |
+| UT-RL-07 | Unknown platform allowed by default | `preflight_check("unknown_platform", "REGULAR")` | `allowed == True` |
+| UT-RL-08 | Cooldown blocks immediate reuse | Record 1 usage; check again instantly | `allowed == False`, reason contains "Cooldown" |
+| UT-RL-09 | Record usage creates state entry | `record_usage("claude_ai", "complete")` | State file contains claude_ai entry |
+| UT-RL-10 | Rate-limited event increments counter | Record `status=rate_limited` | Rate-limit counter for platform incremented |
+| UT-RL-11 | Successful usage resets rate-limit counter | Record rate_limited then complete | Counter reset after success |
+| UT-RL-12 | Stagger returns all platforms | 3 platforms configured | `stagger_order()` returns all 3 |
+| UT-RL-13 | Stagger delays are incremental | 3 platforms | Each successive platform has higher delay |
+| UT-RL-14 | Rate-limited platform gets lower stagger priority | 1 platform recently rate-limited | Rate-limited platform sorted last |
 
 ### 2.3 `skills/orchestrator/engine/collate_responses.py`
 
@@ -194,11 +196,41 @@ All tests must use a temporary state file path to avoid touching the real `~/.ch
 | TC-HOOK-1 | Plugin `SessionStart` hook invokes `install.sh → setup.sh` on first session | Fresh plugin install via `claude plugin install` | `skills/orchestrator/engine/.venv` exists after first Claude Code session |
 | TC-HOOK-2 | `.installed` sentinel prevents re-run of setup on subsequent sessions | `.installed` file already present | `setup.sh` is not called again on second and subsequent sessions |
 
+### 2.9 `skills/orchestrator/engine/utils.py`
+
+| Test ID | Test Case | Input | Expected Output |
+|---------|-----------|-------|-----------------|
+| UT-UT-01 | `pre_clean_text` strips URLs | Text with `https://example.com/...` | URLs replaced with `[URL]` |
+| UT-UT-02 | `pre_clean_text` strips query-string parameters | Text with `?foo=bar&baz=qux` | Params replaced with `[PARAMS]` |
+| UT-UT-03 | `pre_clean_text` strips base64 blobs | Text with 80+ char alphanumeric string | Blob replaced with `[B64]` |
+| UT-UT-04 | `pre_clean_text` neutralizes `word=word` | `key=value` | Converted to `key:value` |
+| UT-UT-05 | `pre_clean_text` strips ChatGPT citation markers | `citeturn3view5` | Replaced with `[cite]` |
+| UT-UT-06 | `pre_clean_text` passes plain text through unchanged | Normal sentence | Output matches input |
+| UT-UT-07 | `deduplicate_response` slices at marker | Text with "End of Report." followed by duplicate | Returns text up to and including marker |
+| UT-UT-08 | `deduplicate_response` returns full text when marker absent | No marker | Full text returned |
+| UT-UT-09 | `deduplicate_response` handles marker at very end | Text ending with "End of Report." | Full text returned |
+
+### 2.10 `skills/comparator/matrix_builder.py`
+
+| Test ID | Test Case | Input | Expected Output |
+|---------|-----------|-------|-----------------|
+| UT-MB-01 | `build_matrix` creates valid XLSX | Sample JSON config | Loadable XLSX file produced |
+| UT-MB-02 | Title row is merged and correct | Standard config | Row 1 contains config title |
+| UT-MB-03 | Header row has correct columns | Standard config | Row 2: "Capability / Feature", "Priority", platform names |
+| UT-MB-04 | Platform columns match input count | 2-platform config | `platforms_added == 2` |
+| UT-MB-05 | Feature rows have correct ticks | PlatformA: all features; PlatformB: 1 feature | Tick/empty cells match input |
+| UT-MB-06 | Category rows are merged headings | 2 categories | DATA_START and subsequent rows have category names |
+| UT-MB-07 | Score and COUNTIF rows contain formulas | Standard config | Row 3 contains COUNTIF, Row 4 contains COUNTIFS |
+| UT-MB-08 | Return value has correct counts | 2 categories, 3 features | `categories == 2`, `features == 3` |
+| UT-MB-09 | Empty platforms list produces minimal matrix | 0 platforms, 1 feature | `platforms_added == 0`, no crash |
+
 ---
 
 ## 3. Integration Tests
 
-Integration tests verify engine CLI behaviour end-to-end without requiring live AI platform responses.
+> **Note:** Integration tests (IT-*) require Chrome CDP or live Claude Code sessions. They are designed as a manual test runbook, not automated pytest. The regression checks in Section 5.1 (automated via `make regression`) cover the subset that can run without Chrome.
+
+Integration tests verify engine CLI behavior end-to-end without requiring live AI platform responses.
 
 ### 3.1 Prerequisites
 
@@ -262,6 +294,8 @@ Integration tests verify engine CLI behaviour end-to-end without requiring live 
 ---
 
 ## 4. End-to-End Tests
+
+> **Note:** E2E tests are manual-only by design — they require active AI platform subscriptions, a running Chrome instance, and in some cases a Claude Code session. They cannot be automated in CI. This section serves as a manual test runbook.
 
 E2E tests require a real Chrome with active AI platform logins.
 
@@ -336,12 +370,12 @@ Run after any engine change:
 |------|---------|
 | `tests/fixtures/sample-research-prompt.md` | Real solution-research prompt for echo-detection regression |
 | `tests/fixtures/simple-prompt.txt` | "Hello, what can you do?" — minimal generic prompt |
-| `tests/fixtures/sample-ai-response.md` | Real AI response for extraction testing |
 | `tests/fixtures/sample-status.json` | Example status.json for collation and skill contract tests |
-| `tests/fixtures/sample-raw-archive.md` | Example raw archive for consolidator input testing |
-| `tests/fixtures/sample-matrix.xlsx` | Minimal XLSX matrix with 3 platforms and 10 features for matrix_ops testing |
-| `tests/fixtures/sample-features.json` | Example features.json with 10 true/false entries |
-| `tests/fixtures/sample-cir.md` | Example CIR (Variant A) for comparator testing |
+| `tests/fixtures/Claude.ai-raw-response.md` | Real Claude.ai response for collation testing |
+| `tests/fixtures/ChatGPT-raw-response.md` | Real ChatGPT response for collation testing |
+| `tests/fixtures/Perplexity-raw-response.md` | Real Perplexity response for collation testing |
+| `tests/fixtures/DeepSeek-raw-response.md` | Real DeepSeek response for collation testing |
+| `tests/fixtures/Google-Gemini-raw-response.md` | Real Gemini response for collation testing |
 
 ### 6.2 Mock Data
 
@@ -367,6 +401,9 @@ Run after any engine change:
 | After `config.py` change | Unit tests UT-CF-01–07 | `pytest tests/test_config.py` |
 | After `matrix_ops.py` change | Unit tests UT-MX-01–09 | `pytest tests/test_matrix_ops.py` |
 | After `launch_report.py` change | Unit tests TC-LAUNCH-1–2 | `pytest tests/test_launch_report.py` |
+| After `utils.py` change | Unit tests UT-UT-01–09 | `pytest tests/test_utils.py` |
+| After `matrix_builder.py` change | Unit tests UT-MB-01–09 | `pytest tests/test_matrix_builder.py` |
+| After `setup.sh` or `install.sh` change | Bootstrap tests TC-SETUP/HOOK/VENV | `pytest tests/test_setup_bootstrap.py` |
 | After all engine changes | Full regression checklist (Section 5.1) | `make check` |
 
 ### 7.2 Validation Phase (after feature completion)
@@ -382,7 +419,7 @@ Run after any engine change:
 
 The system is considered production-ready when:
 
-1. All unit tests pass (pytest) — 0 failures
+1. All 93 automated tests pass (`make check`) — 0 failures
 2. All compile checks pass — 0 errors
 3. Regression checklist is clean
 4. At least one successful E2E run with all 7 platforms in REGULAR mode, archive auto-generated in named subdirectory
@@ -391,3 +428,41 @@ The system is considered production-ready when:
 7. Budget command shows correct remaining counts before and after a run
 8. Solution researcher works without domain file (UC-03)
 9. Domain knowledge file enriched after research + comparison run
+10. Makefile `make check` runs compile + test + regression in a single command and exits 0
+
+---
+
+## 8. Source Module Coverage Matrix
+
+| Source Module | Test File | Test Count | Coverage Level |
+|---------------|-----------|------------|----------------|
+| `engine/prompt_echo.py` | `test_prompt_echo.py` | 8 (UT-PE-01–08) | Full — all public functions |
+| `engine/rate_limiter.py` | `test_rate_limiter.py` | 14 (UT-RL-01–14) | Full — init, preflight, record, stagger |
+| `engine/collate_responses.py` | `test_collate_responses.py` | 7 (UT-CR-01–07) | Full — `collate()` function |
+| `engine/config.py` | `test_config.py` | 7 (UT-CF-01–07) | Full — all config dicts validated |
+| `engine/orchestrator.py` | `test_orchestrator_args.py` | 11 (UT-OR-01–11) | Partial — CLI arg parsing only |
+| `engine/utils.py` | `test_utils.py` | 9 (UT-UT-01–09) | Full — all public functions |
+| `comparator/matrix_ops.py` | `test_matrix_ops.py` | 9 (UT-MX-01–09) | Full — all CLI subcommands |
+| `comparator/matrix_builder.py` | `test_matrix_builder.py` | 9 (UT-MB-01–09) | Full — build_matrix + edge cases |
+| `landscape/launch_report.py` | `test_launch_report.py` | 2 (TC-LAUNCH-1–2) | Partial — CLI output + port handling |
+| `setup.sh` + `install.sh` | `test_setup_bootstrap.py` | 17 (TC-SETUP/HOOK/VENV/LAUNCH) | Full — venv, idempotency, hooks, delegation |
+| `engine/agent_fallback.py` | *(none — E2E only)* | 0 | Not unit-testable (requires live API + Chrome) |
+| `engine/platforms/*.py` | *(none — E2E only)* | 0 | Not unit-testable (requires live DOM) |
+| `engine/orchestrator.py` (runtime) | *(none — E2E only)* | 0 | Not unit-testable (requires live Chrome) |
+| **Total automated** | **10 test files** | **93 tests** | |
+
+---
+
+## 9. Known Coverage Gaps
+
+These modules have no automated unit tests by design — they require live infrastructure that cannot run in CI.
+
+| Module | Why untestable in CI | Covered by |
+|--------|---------------------|------------|
+| `engine/agent_fallback.py` | Requires ANTHROPIC_API_KEY or GOOGLE_API_KEY + live Chrome instance + browser-use library | E2E-09 (manual) |
+| `engine/platforms/*.py` (7 files) | Each platform's `inject_prompt()`, `extract_response()`, `check_rate_limit()` interact with live DOM via Playwright | E2E Section 4.2 + Platform Regression 4.3 (manual) |
+| `engine/orchestrator.py` runtime paths | `orchestrate()`, `run_single_platform()`, `_staggered_run()` require Chrome CDP + live platforms | E2E-01 through E2E-12 (manual) |
+| SKILL.md routing logic | Executed by Claude Code LLM, not Python functions | TC-ROUTE-1–4 (manual, via Claude Code session) |
+| Domain enrichment | SKILL.md instruction executed by Claude Code LLM | TC-DOMAIN-1–2 (manual) |
+| Self-improvement / Run Log | SKILL.md instruction executed by Claude Code LLM | TC-SELF-1 (manual) |
+| `preview.html` rendering | Requires HTTP server + browser DOM evaluation | TC-PREVIEW-1–2 (manual) |

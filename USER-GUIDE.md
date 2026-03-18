@@ -228,7 +228,7 @@ multi-ai-skills/
 │       ├── <task-name> - Raw AI Responses.md  (auto-collated archive)
 │       └── agent-fallback-log.json  (if fallback was triggered)
 │
-├── tests/                      # pytest unit test suite (75 tests)
+├── tests/                      # pytest unit test suite (93 tests)
 │   ├── fixtures/               # Sample prompts, responses, status files
 │   ├── test_prompt_echo.py
 │   ├── test_rate_limiter.py
@@ -883,7 +883,7 @@ source skills/orchestrator/engine/.venv/bin/activate
 cd skills/orchestrator/engine && python -m pytest ../../../tests/ -v --tb=short
 ```
 
-**Expected output:** `75 passed` in ~2s
+**Expected output:** `93 passed` in ~4s
 
 ### Test Coverage
 

@@ -496,7 +496,7 @@ python3 skills/comparator/matrix_ops.py <operation> [options]
 5. Grok may require condensed prompts due to physical typing constraints
 6. The host AI (Claude Code) has a context window limit; raw response files are read externally
 7. Matrix XLSX files must not be opened in Excel/Numbers while `matrix_ops.py` is running
-8. Rate limit budgets are conservative estimates based on observed behaviour; actual limits may differ per account and subscription level
+8. Rate limit budgets are conservative estimates based on observed behavior; actual limits may differ per account and subscription level
 9. The `rate-limit-state.json` is shared across all projects on the machine; budget consumption from one project affects others
 
 ### 7.2 Assumptions

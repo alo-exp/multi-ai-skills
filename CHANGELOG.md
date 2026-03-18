@@ -18,7 +18,7 @@ Dependency bootstrap overhaul. Introduced `setup.sh` as the canonical one-time i
 |------|-------------|
 | `setup.sh` | Canonical bootstrap script (Python 3.11+): creates `skills/orchestrator/engine/.venv`, installs `playwright>=1.40.0` and `openpyxl>=3.1.0`, runs `playwright install chromium`, creates `.env` template, runs smoke test. `--with-fallback` flag also installs `browser-use==0.12.2`, `anthropic>=0.76.0`, `fastmcp>=2.0.0`. Idempotent: reuses existing `.venv` on re-run without re-checking system Python version. |
 | `skills/orchestrator/engine/requirements.txt` | Explicit requirements file listing `playwright>=1.40.0` and `openpyxl>=3.1.0`. |
-| `tests/test_setup_bootstrap.py` | 17 new tests covering TC-SETUP-1/3, TC-VENV-1, TC-HOOK-1/2, TC-LAUNCH-1/2. Total test suite: 75 tests (was 58). |
+| `tests/test_setup_bootstrap.py` | 17 new tests covering TC-SETUP-1/3, TC-VENV-1, TC-HOOK-1/2, TC-LAUNCH-1/2. Total test suite: 75 tests (was 58). Now 93 with v4.2 additions. |
 
 ---
 
