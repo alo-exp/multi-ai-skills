@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "multi-ai-skills"
+name = "multai"
 version = "0.2.260318"
-description = "Multi-AI orchestration platform: submit prompts to 7 AI platforms simultaneously, manage rate limits, operate XLSX comparison matrices, and synthesize results — packaged as a Claude Code plugin."
+description = "MultAI — submit prompts to 7 AI platforms simultaneously, manage rate limits, operate XLSX comparison matrices, and synthesize results. Packaged as a Claude Code plugin."
 readme = "USER-GUIDE.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

@@ -2,7 +2,7 @@
 
 > **Submit a research prompt to 7 AI platforms simultaneously — all from Claude Code.**
 
-`multi-ai-skills` is a Claude Code plugin that automates multi-AI research workflows. It uses Playwright CDP automation to submit prompts to Claude.ai, ChatGPT, Microsoft Copilot, Perplexity, Grok, DeepSeek, and Google Gemini in parallel, extracts their responses, and synthesizes the results into structured deliverables — market landscape reports, solution capability matrices, comparison spreadsheets, and more.
+`MultAI` is a Claude Code plugin that automates multi-AI research workflows. It uses Playwright CDP automation to submit prompts to Claude.ai, ChatGPT, Microsoft Copilot, Perplexity, Grok, DeepSeek, and Google Gemini in parallel, extracts their responses, and synthesizes the results into structured deliverables — market landscape reports, solution capability matrices, comparison spreadsheets, and more.
 
 ---
 
@@ -74,10 +74,10 @@ Playwright Engine ──► 7 AI Platforms ──► reports/
 /plugin marketplace add alo-exp/multai
 
 # Step 2 — install the plugin from that marketplace:
-/plugin install multi-ai-skills@multi-ai-skills
+/plugin install multai@multai
 ```
 
-> Skills are namespaced: `/multi-ai-skills:orchestrator`, `/multi-ai-skills:solution-researcher`, etc.
+> Skills are namespaced: `/multai:orchestrator`, `/multai:solution-researcher`, etc.
 > Run `/reload-plugins` if skills don't appear immediately.
 
 Python dependencies (`playwright`, `openpyxl`, Chromium browser) are **installed automatically** on the first session start via a `SessionStart` hook (hook → `install.sh` → `setup.sh`). No manual setup required.
@@ -91,13 +91,13 @@ Python dependencies (`playwright`, `openpyxl`, Chromium browser) are **installed
 
 ```bash
 git clone https://github.com/alo-exp/multai.git
-cd multi-ai-skills
+cd multai
 bash setup.sh            # creates .venv, installs pip deps + Playwright Chromium + .env template
 # optional agent fallback:
 bash setup.sh --with-fallback
 
 # Load directly without marketplace registration:
-claude --plugin-dir ./multi-ai-skills
+claude --plugin-dir ./multai
 ```
 
 ### 3 — Log in to platforms
@@ -213,7 +213,7 @@ Synthesizes raw multi-AI responses into a single structured report. Called autom
 ## Project Structure
 
 ```
-multi-ai-skills/
+multai/
 ├── .claude-plugin/
 │   ├── plugin.json           ← Claude Code Plugin manifest
 │   └── hooks.json            ← SessionStart hook (runs install.sh → setup.sh once)

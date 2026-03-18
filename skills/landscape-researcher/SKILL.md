@@ -97,7 +97,7 @@ Generate a task name using the current date and time:
 market-landscape-{YYYYMMDD}-{HHMM}
 ```
 
-Run the engine (adjust path relative to your working directory — should be the `multi-ai-skills/` root):
+Run the engine (adjust path relative to your working directory — should be the `multai/` root):
 
 ```bash
 cd <workspace-root>

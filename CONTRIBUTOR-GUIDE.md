@@ -1,6 +1,6 @@
 # MultAI — Contributor Guide
 
-**Version:** 0.2.260318A Alpha | **Date:** 2026-03-18
+**Version:** 0.2.260318B Alpha | **Date:** 2026-03-18
 
 > **Looking for the end-user guide?** See [USER-GUIDE.md](USER-GUIDE.md).
 
@@ -116,7 +116,7 @@ Log in to these platforms in your regular Chrome profile before running:
 
 ```bash
 git clone https://github.com/alo-exp/multai.git
-cd multi-ai-skills
+cd multai
 ```
 
 ### 3.2 Install Core Dependencies
@@ -169,7 +169,7 @@ The skills are invoked by name inside Claude Code conversations — no additiona
 ## 4. Project Structure
 
 ```
-multi-ai-skills/
+multai/
 │
 ├── skills/
 │   ├── orchestrator/           # Entry-point skill + Playwright engine

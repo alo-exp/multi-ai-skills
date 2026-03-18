@@ -46,6 +46,9 @@ fi
 MODE="stamp"
 if [ "${1:-}" = "--check" ]; then
     MODE="check"
+    # In check mode, always read display version from files (not tag)
+    # since the tag may not exist yet for the current version
+    DISPLAY_VERSION=$(grep -m1 'Version:' docs/SRS.md | sed 's/.*Version:\*\* *//; s/ *$//')
 elif [ "${1:-}" = "--bump" ]; then
     shift
     if [ $# -lt 1 ]; then

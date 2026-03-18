@@ -1,6 +1,6 @@
 # MultAI — User Guide
 
-**Version:** 0.2.260318A Alpha | **Date:** 2026-03-18
+**Version:** 0.2.260318B Alpha | **Date:** 2026-03-18
 
 ---
 
@@ -116,7 +116,7 @@ git clone https://github.com/alo-exp/multai.git
 **Step 3.** Enter the project directory:
 
 ```
-cd multi-ai-skills
+cd multai
 ```
 
 **Step 4.** Run the setup script:
@@ -166,7 +166,7 @@ Here's a step-by-step walkthrough of your first MultAI run:
 **Step 1.** Open Claude Code in the MultAI project directory:
 
 ```
-cd multi-ai-skills
+cd multai
 claude
 ```
 
