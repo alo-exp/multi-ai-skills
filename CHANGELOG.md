@@ -1,10 +1,40 @@
 # Changelog
 
-All notable changes to `multi-ai-skills` are documented in this file.
+All notable changes to MultAI are documented in this file.
+
+Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CICD-Strategy-and-Plan.md) Section 7.1.
 
 ---
 
-## [4.1.0] — 2026-03-18
+## 0.2.260318A Alpha — Release Pipeline & Doc Restructure
+
+**Date:** 2026-03-18
+
+### Versioning
+- Adopted hybrid semver + CalVer scheme: `Major.Minor.YYMMDDX Phase`
+- Previous internal versions (v2.0–v4.2) consolidated into `0.2.260318A Alpha`
+- All doc headers, pyproject.toml, website, and git tags updated
+
+### Engine Hardening (15 bugs fixed across 3 E2E test rounds)
+- Rate limiter timezone fix: `_count_today()` now uses local midnight consistently
+- Agent fallback model names extracted to `config.py` constants
+- All 7 platform adapters hardened: multi-selector fallbacks, improved rate-limit detection, DEEP mode toggles
+
+### Documentation Restructure
+- `USER-GUIDE.md` → `CONTRIBUTOR-GUIDE.md` (technical contributor reference)
+- New `USER-GUIDE.md` created (friendly end-user guide, 296 lines)
+- Rebranded all docs from "Multi-AI Skills" to "MultAI"
+- Report viewer: DOCS nav row in top bar + sidebar footer links
+
+### CI/CD Pipeline
+- `.github/workflows/ci.yml` — GitHub Actions (Python 3.11/3.12/3.13 matrix)
+- Security scanning: pip-audit + secret detection + plugin manifest validation
+- 96 automated tests (91 in CI + 5 local-only venv tests)
+- Full CI/CD Strategy doc rewrite with branching model, rollback procedure, Phase 2/3 roadmap
+
+---
+
+## [4.1.0] — 2026-03-18 (Internal)
 
 ### Summary
 

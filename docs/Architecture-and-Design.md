@@ -1,7 +1,7 @@
 # Architecture and Design Document
 
-**Project:** Multi-AI Orchestrator Platform
-**Version:** 4.2
+**Project:** MultAI
+**Version:** 0.2.260318A Alpha
 **Date:** 2026-03-18
 
 | Version | Date | Summary |

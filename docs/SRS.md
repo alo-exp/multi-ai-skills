@@ -1,7 +1,7 @@
 # Software Requirements Specification (SRS)
 
-**Project:** Multi-AI Orchestrator Platform
-**Version:** 4.1
+**Project:** MultAI
+**Version:** 0.2.260318A Alpha
 **Date:** 2026-03-18
 **Base Version:** multi-ai-skills/ (formerly solution-research-skill-260308A)
 

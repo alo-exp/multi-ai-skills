@@ -1,7 +1,7 @@
 # CI/CD Strategy and Plan
 
 **Project:** MultAI
-**Version:** 4.2
+**Version:** 0.2.260318A Alpha
 **Date:** 2026-03-18
 
 | Version | Date | Summary |
@@ -13,6 +13,7 @@
 | 4.0 | 2026-03-16 | Updated engine paths to skills/orchestrator/engine/; added landscape-researcher and comparator targets |
 | 4.1 | 2026-03-18 | Added setup.sh smoke test; updated Python requirement to 3.11+; updated install step |
 | 4.2 | 2026-03-18 | Full rewrite — synced Makefile and GitHub Actions with actual code; added security scanning, coverage, matrix testing, plugin-specific CI, branching model, and Phase 2/3 acceptance criteria |
+| 0.2.260318A | 2026-03-18 | Adopted hybrid semver+CalVer scheme (`Major.Minor.YYMMDDX Phase`). All previous internal versions (2.0–4.2) consolidated. Added version display to website. |
 
 ---
 
@@ -531,14 +532,26 @@ When multiple contributors join:
 
 ### 7.1 Version Scheme
 
-`{major}.{minor}` with date tracking in CHANGELOG.md
+`{Major}.{Minor}.{YYMMDDX} {Phase}` — hybrid semver + CalVer.
 
-| Increment | When | Example |
-|-----------|------|---------|
-| Major (e.g., 3→4) | Architectural changes, new major subsystems | Adding comparator, rate limiter |
-| Minor (e.g., 4.1→4.2) | New features within existing architecture | New tests, doc restructure, bug fixes |
+| Component | Meaning | Example |
+|-----------|---------|---------|
+| **Major** | Breaking changes, architectural overhauls | `0` → `1` |
+| **Minor** | New features within existing architecture | `0.1` → `0.2` |
+| **YYMMDDX** | Calendar date + daily increment letter. Updated with **every commit**. | `260318A`, `260318B`, `260319A` |
+| **Phase** | Maturity label: `Alpha`, `Beta`, `RC`, or omitted for GA | `Alpha` |
 
-**Current version:** 4.2 (2026-03-18)
+**Formats by context:**
+
+| Context | Format | Example |
+|---------|--------|---------|
+| Git tags | `vMajor.Minor.YYMMDDX-phase` | `v0.2.260318A-alpha` |
+| Doc headers | `Version: Major.Minor.YYMMDDX Phase` | `Version: 0.2.260318A Alpha` |
+| pyproject.toml | `version = "Major.Minor.YYMMDD"` (PEP 440; letter in metadata) | `version = "0.2.260318"` |
+| Website / UI | Display version with phase | `v0.2.260318A Alpha` |
+| CHANGELOG | `## Major.Minor.YYMMDDX Phase — Title` | `## 0.2.260318A Alpha — Initial Release` |
+
+**Current version:** 0.2.260318A Alpha
 
 ### 7.2 What Gets Versioned
 
