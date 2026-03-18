@@ -1,8 +1,8 @@
 # Test Strategy and Plan
 
 **Project:** Multi-AI Orchestrator Platform
-**Version:** 4.0
-**Date:** 2026-03-16
+**Version:** 4.1
+**Date:** 2026-03-18
 
 | Version | Date | Summary |
 |---------|------|---------|
@@ -11,6 +11,7 @@
 | 3.1 | 2026-03-14 | Added rate limiter tests (preflight, record, persistence, backoff, detection) |
 | 3.2 | 2026-03-14 | Added task-name and collation tests (collate_responses, --task-name routing) |
 | 4.0 | 2026-03-16 | Added routing, landscape-researcher, launch_report, preview.html, domain enrichment, and self-improvement tests; updated all engine path references |
+| 4.1 | 2026-03-18 | Added setup bootstrap tests (TC-SETUP-1–3), plugin hook tests (TC-HOOK-1–2), venv check test (TC-VENV-1) |
 
 ---
 
@@ -182,6 +183,17 @@ All tests must use a temporary state file path to avoid touching the real `~/.ch
 |---------|-----------|-------|-----------------|
 | TC-SELF-1 | Each SKILL.md gains Run Log entry after successful run | Successful run of any of the 5 skills | SKILL.md contains new timestamped entry in Run Log section; entry count increased by 1 |
 
+### 2.8 v4.1 Setup Bootstrap, Plugin Hook, and Venv Check Tests
+
+| Test ID | Test Case | Setup | Expected |
+|---------|-----------|-------|----------|
+| TC-SETUP-1 | `setup.sh` creates `.venv` and installs playwright + openpyxl | Run `bash setup.sh` in a clean directory | `.venv/bin/python -c "import playwright, openpyxl"` exits 0 |
+| TC-SETUP-2 | `setup.sh --with-fallback` also installs browser-use | Run `bash setup.sh --with-fallback` | `.venv/bin/python -c "import browser_use"` exits 0 |
+| TC-SETUP-3 | `setup.sh` is idempotent | Run `bash setup.sh` twice in succession | Second run exits 0 with no error |
+| TC-VENV-1 | Orchestrator Phase 1 detects missing `.venv` and shows setup message | Delete `skills/orchestrator/engine/.venv`; inspect SKILL.md Phase 1 instruction | Phase 1 check message contains "bash setup.sh" |
+| TC-HOOK-1 | Plugin `SessionStart` hook invokes `install.sh → setup.sh` on first session | Fresh plugin install via `claude plugin install` | `skills/orchestrator/engine/.venv` exists after first Claude Code session |
+| TC-HOOK-2 | `.installed` sentinel prevents re-run of setup on subsequent sessions | `.installed` file already present | `setup.sh` is not called again on second and subsequent sessions |
+
 ---
 
 ## 3. Integration Tests
@@ -190,7 +202,7 @@ Integration tests verify engine CLI behaviour end-to-end without requiring live 
 
 ### 3.1 Prerequisites
 
-- Python 3.10+ with `playwright`, `openpyxl`, `asyncio`
+- Python 3.11+ with `playwright`, `openpyxl`, `asyncio`
 - Chrome installed (for CDP connection tests)
 - No AI platform subscriptions required (tests stop before or mock prompt submission)
 

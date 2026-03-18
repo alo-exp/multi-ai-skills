@@ -1,8 +1,8 @@
 # CI/CD Strategy and Plan
 
 **Project:** Multi-AI Orchestrator Platform
-**Version:** 4.0
-**Date:** 2026-03-16
+**Version:** 4.1
+**Date:** 2026-03-18
 
 | Version | Date | Summary |
 |---------|------|---------|
@@ -11,6 +11,7 @@
 | 3.1 | 2026-03-14 | Added rate_limiter.py compile check, rate limit unit tests, regression checks |
 | 3.2 | 2026-03-14 | Added collate_responses.py compile check, collation tests, budget smoke test |
 | 4.0 | 2026-03-16 | Updated engine paths to skills/orchestrator/engine/; added landscape-researcher and comparator script lint targets; added landscape smoke test |
+| 4.1 | 2026-03-18 | Added setup.sh smoke test; updated Python requirement to 3.11+; updated install step to use engine/requirements.txt |
 
 ---
 
@@ -56,6 +57,8 @@ pip install -r skills/orchestrator/engine/requirements.txt
 pip install pytest  # Test runner
 ```
 
+> **Note:** `setup.sh` is the user-facing bootstrap (creates `skills/orchestrator/engine/.venv`, installs deps, runs `playwright install chromium`). CI installs dependencies directly via pip as shown above — no Chromium browser installation needed for unit tests and regression checks.
+
 **Duration:** ~30s
 **Gate:** Exit code 0
 
@@ -83,10 +86,14 @@ for f in skills/orchestrator/engine/platforms/*.py; do python3 -m py_compile "$f
 
 # Optional: ruff or flake8 lint
 # ruff check skills/orchestrator/engine/ --select E,F,W
+
+# Bash script syntax checks
+bash -n setup.sh
+bash -n install.sh
 ```
 
 **Duration:** ~5s
-**Gate:** All 11 core files (7 engine + 2 comparator + 1 landscape + 1 launcher) + all platform files compile without errors
+**Gate:** All 11 core files (7 engine + 2 comparator + 1 landscape + 1 launcher) + all platform files compile without errors; bash scripts pass syntax check
 
 ### 2.4 Stage 3: Unit Tests
 
@@ -153,6 +160,10 @@ python3 -m py_compile skills/landscape-researcher/launch_report.py
 
 # Landscape workflow smoke test (v4.0)
 python3 skills/landscape-researcher/launch_report.py --report-dir test --report-file "Test.md" --no-browser
+
+# Setup bootstrap smoke test (v4.1)
+bash -n setup.sh    # syntax check
+bash -n install.sh  # syntax check
 ```
 
 **Duration:** ~10s
@@ -165,7 +176,7 @@ python3 skills/landscape-researcher/launch_report.py --report-dir test --report-
 ### 3.1 Recommended CI Platform
 
 **GitHub Actions** (if the repo is on GitHub) or any CI that supports:
-- Python 3.10+
+- Python 3.11+
 - pip install
 - No Chrome required (unit tests and most regression checks only)
 
@@ -183,7 +194,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12'  # 3.11+ required; 3.12 used in CI
 
       - name: Install dependencies
         run: |
@@ -227,6 +238,11 @@ jobs:
       - name: Landscape smoke test (v4.0)
         run: |
           python skills/landscape-researcher/launch_report.py --report-dir test --report-file "Test.md" --no-browser
+
+      - name: Setup bootstrap syntax check (v4.1)
+        run: |
+          bash -n setup.sh
+          bash -n install.sh
 ```
 
 ### 3.3 What CI Cannot Test

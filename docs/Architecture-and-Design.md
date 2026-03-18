@@ -1,8 +1,8 @@
 # Architecture and Design Document
 
 **Project:** Multi-AI Orchestrator Platform
-**Version:** 4.0
-**Date:** 2026-03-16
+**Version:** 4.1
+**Date:** 2026-03-18
 
 | Version | Date | Summary |
 |---------|------|---------|
@@ -11,6 +11,7 @@
 | 3.1 | 2026-03-14 | Added rate_limiter.py, check_rate_limit() lifecycle, rate limit flow |
 | 3.2 | 2026-03-14 | Added collate_responses.py, --task-name routing, collation step in flow |
 | 4.0 | 2026-03-16 | 5-skill architecture: landscape-researcher, engine owned by orchestrator, comparator owns matrix scripts, self-improving skills, domain knowledge sharing model, intent-based routing |
+| 4.1 | 2026-03-18 | Dependency bootstrap architecture: setup.sh, plugin hook chain, skills.sh install path, venv check |
 
 ---
 
@@ -410,6 +411,60 @@ User request (e.g., "Research Northflank.com")
 
 **Key distinction:** The solution-researcher and landscape-researcher are the specialized paths that use prompt templates + consolidation guides. The solution-researcher uniquely invokes the comparator. The landscape-researcher uniquely launches an HTML report viewer. The generic pipeline (orchestrator → consolidator) works with any arbitrary prompt.
 
+---
+
+## 1a. Dependency Bootstrap Architecture
+
+Before any skill can invoke the engine, the Python virtual environment at `skills/orchestrator/engine/.venv` must exist. Two install paths lead to the same canonical bootstrap script (`setup.sh`). A third path (clone/dev) invokes it directly.
+
+### Install Paths
+
+```
+Plugin install path:
+  Claude Desktop / claude plugin install
+    └─► SessionStart hook (hooks/hooks.json)
+          └─► install.sh  (thin delegate — exec bash setup.sh "$@")
+                └─► setup.sh  (canonical bootstrap)
+                      ├── creates skills/orchestrator/engine/.venv (Python 3.11+)
+                      ├── pip install playwright openpyxl
+                      ├── playwright install chromium
+                      ├── creates .env template
+                      ├── runs smoke test
+                      └── writes .installed sentinel
+
+skills.sh install path:
+  npx skills add alo-exp/multai
+    └─► SKILL.md files installed (no scripts run)
+          └─► Orchestrator SKILL.md Phase 1 venv check
+                ├── .venv present? → proceed normally
+                └── .venv absent?  → show "run bash setup.sh" message
+                                          └─► User runs: bash setup.sh
+
+Clone/dev path:
+  git clone → bash setup.sh  (direct)
+```
+
+### Key Behaviors
+
+| Behavior | Detail |
+|----------|--------|
+| **Idempotency** | If `.venv` already exists, `setup.sh` reuses it without re-checking the system Python version or reinstalling packages. |
+| **`.installed` sentinel** | Written by `setup.sh` at the repo root. The `SessionStart` hook checks for this file and skips re-running `setup.sh` on every subsequent session. |
+| **`--with-fallback` flag** | Optional. When passed to `setup.sh`, also installs `browser-use`, `anthropic`, and `fastmcp` for the vision-based agent fallback path. |
+| **Python version** | Python 3.11 or later is required. `setup.sh` validates the system Python version before creating the venv. |
+
+### Key Locations
+
+| Artifact | Path |
+|----------|------|
+| Canonical bootstrap | `setup.sh` (repo root) |
+| Hook delegate | `install.sh` (repo root) |
+| Virtual environment | `skills/orchestrator/engine/.venv` |
+| Requirements file | `skills/orchestrator/engine/requirements.txt` |
+| Sentinel file | `.installed` (repo root, gitignored) |
+
+---
+
 ### 3.7 Cross-Skill Domain Knowledge Enrichment
 
 All skills participate in domain knowledge enrichment:
@@ -747,6 +802,63 @@ Each skill follows a **Self-Improve** pattern: after every successful run, the s
 **Scope boundary:** A skill only modifies files within its own directory (`skills/{skill-name}/`). It never edits another skill's files, the engine, or domain knowledge outside the enrichment protocol described in Section 3.7.
 
 **Purpose:** This creates a continuous improvement loop without human intervention. Each run refines the skill's heuristics, prompt wording, and operational parameters. The cumulative run log also serves as an **audit trail** -- reviewers can trace when and why a skill changed its own behaviour. Because entries are append-only and timestamped, no historical context is lost, and regressions can be traced back to the specific run that introduced them.
+
+### 6.11 Dependency Bootstrap (v4.1)
+
+The project supports two distinct installation paths, both of which converge on `setup.sh` as the canonical bootstrap:
+
+#### Plugin Install Path (Claude Desktop GUI / `claude plugin install`)
+
+```
+SessionStart hook (hooks/hooks.json)
+    │
+    └──► install.sh  (thin delegate — exec bash setup.sh "$@")
+              │
+              └──► setup.sh
+                        │
+                        ├── Creates skills/orchestrator/engine/.venv (Python 3.11+)
+                        ├── Installs playwright>=1.40.0, openpyxl>=3.1.0
+                        ├── Runs playwright install chromium
+                        ├── Creates .env template
+                        └── Writes .installed sentinel
+```
+
+The `SessionStart` hook fires `install.sh` on the first session. The `.installed` sentinel file prevents re-invocation on all subsequent sessions. The user takes no manual action.
+
+#### skills.sh Install Path (`npx skills add alo-exp/multai`)
+
+```
+npx skills add alo-exp/multai
+    │
+    └──► SKILL.md files installed only (no hook runs)
+              │
+              └──► orchestrator/SKILL.md Phase 1 venv check
+                        │
+                        ├── .venv present? → proceed normally
+                        └── .venv absent?  → show "run bash setup.sh" message
+                                                    │
+                                                    └──► User runs: bash setup.sh
+```
+
+The user must manually run `bash setup.sh` after a `skills.sh` install. The orchestrator Phase 1 detects the missing `.venv` and provides the exact command.
+
+#### Clone / Dev Path
+
+```
+git clone → bash setup.sh
+```
+
+Direct `bash setup.sh` invocation. Same result as above.
+
+#### Key Locations
+
+| Artifact | Path |
+|----------|------|
+| Bootstrap script | `setup.sh` (repo root) |
+| Hook delegate | `install.sh` (repo root) |
+| Virtual environment | `skills/orchestrator/engine/.venv` |
+| Requirements file | `skills/orchestrator/engine/requirements.txt` |
+| Sentinel file | `.installed` (repo root, gitignored) |
 
 ---
 

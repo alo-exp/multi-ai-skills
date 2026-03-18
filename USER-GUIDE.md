@@ -1,6 +1,6 @@
 # Multi-AI Skills — User Guide
 
-**Version:** 4.0 | **Date:** 2026-03-16
+**Version:** 4.1 | **Date:** 2026-03-18
 
 ---
 
@@ -78,7 +78,7 @@ Playwright Engine  ──►  7 AI Platforms  ──►  reports/
 | Requirement | Notes |
 |-------------|-------|
 | **macOS** (primary) or Linux | Windows is untested |
-| **Python 3.10+** | Python 3.13 recommended (required for agent fallback via `browser-use`) |
+| **Python 3.11+** | Python 3.13 recommended (required for agent fallback via `browser-use`) |
 | **Google Chrome** | Must be installed at `/Applications/Google Chrome.app` |
 | **Active logins** | You must be logged in to each AI platform you want to use |
 | **Claude Code** | Skills are invoked by Claude Code as the host AI |
@@ -119,22 +119,27 @@ cd multi-ai-skills
 
 ### 3.2 Install Core Dependencies
 
+Run the canonical bootstrap script from the repo root:
+
 ```bash
-pip install playwright openpyxl
-playwright install chromium
+bash setup.sh
 ```
+
+This creates a virtual environment at `skills/orchestrator/engine/.venv`, installs `playwright>=1.40.0` and `openpyxl>=3.1.0`, runs `playwright install chromium`, and creates a `.env` template.
+
+> **Plugin install users:** If you installed via `claude plugin install`, dependencies are installed automatically on the first session start via the `SessionStart` hook (hook → `install.sh` → `setup.sh`). No manual step is needed.
+
+> **skills.sh install users:** If you installed via `npx skills add alo-exp/multai`, run `bash setup.sh` manually after install. The orchestrator Phase 1 will detect a missing `.venv` and prompt you with instructions if you forget.
 
 ### 3.3 Install Agent Fallback Dependencies (Optional)
 
-The agent fallback requires Python 3.13 and a dedicated venv:
+To also install the vision-based `browser-use` agent fallback (requires Python 3.13):
 
 ```bash
-/opt/homebrew/bin/python3.13 -m venv skills/orchestrator/engine/.venv
-source skills/orchestrator/engine/.venv/bin/activate
-pip install browser-use==0.12.2 langchain-anthropic playwright
-playwright install chromium
-deactivate
+bash setup.sh --with-fallback
 ```
+
+This installs `browser-use==0.12.2`, `anthropic>=0.76.0`, and `fastmcp>=2.0.0` into the same `.venv` at `skills/orchestrator/engine/.venv`.
 
 The orchestrator auto-detects this venv and enables fallback if present alongside a valid API key.
 
@@ -233,6 +238,8 @@ multi-ai-skills/
 │   ├── test_matrix_ops.py
 │   └── test_launch_report.py
 │
+├── setup.sh                    # Canonical bootstrap — creates .venv, installs deps
+├── install.sh                  # Plugin hook delegate → setup.sh
 ├── CHANGELOG.md
 ├── USER-GUIDE.md               # This file
 └── .gitignore
@@ -865,9 +872,15 @@ The project has a full pytest unit test suite covering all core engine modules.
 
 ### Run All Tests
 
+Use the project venv (created by `bash setup.sh`):
+
 ```bash
-cd skills/orchestrator/engine
-python3 -m pytest ../../../tests/ -v --tb=short
+# From the repo root:
+skills/orchestrator/engine/.venv/bin/python -m pytest tests/ -v --tb=short
+
+# Or activate the venv first, then run normally:
+source skills/orchestrator/engine/.venv/bin/activate
+cd skills/orchestrator/engine && python -m pytest ../../../tests/ -v --tb=short
 ```
 
 **Expected output:** `58 passed` in ~2s
@@ -1081,6 +1094,7 @@ To add an 8th platform:
 
 | Version | Date | Summary |
 |---------|------|---------|
+| 4.1 | 2026-03-18 | setup.sh bootstrap; install.sh delegates to setup.sh; SessionStart hook auto-installs deps for plugin users; venv check in orchestrator Phase 1 |
 | 4.0 | 2026-03-16 | Landscape researcher, intelligent routing, self-improving skills, domain knowledge sharing, query-param preview |
 | 3.2 | 2026-03-14 | Collation, `--task-name` routing, `collate_responses.py` |
 | 3.1 | 2026-03-14 | Rate limiter, budget/cooldown/backoff, `--tier`, `--budget` |

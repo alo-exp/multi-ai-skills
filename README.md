@@ -65,7 +65,7 @@ Playwright Engine ──► 7 AI Platforms ──► reports/
 ### 1 — Prerequisites
 
 - Claude Code **v1.0.33 or later** — run `claude --version` to check; update with `brew upgrade claude-code` or `npm update -g @anthropic-ai/claude-code`
-- Python 3.10+, Google Chrome installed
+- Python 3.11+, Google Chrome installed
 
 ### 2 — Install via Claude Code Plugin Manager
 
@@ -80,11 +80,11 @@ Playwright Engine ──► 7 AI Platforms ──► reports/
 > Skills are namespaced: `/multi-ai-skills:orchestrator`, `/multi-ai-skills:solution-researcher`, etc.
 > Run `/reload-plugins` if skills don't appear immediately.
 
-Python dependencies (`playwright`, `openpyxl`, Chromium browser) are **installed automatically** on the first session start via a `SessionStart` hook. No manual setup required.
+Python dependencies (`playwright`, `openpyxl`, Chromium browser) are **installed automatically** on the first session start via a `SessionStart` hook (hook → `install.sh` → `setup.sh`). No manual setup required.
 
 > **Agent fallback (optional):** To enable the vision-based browser-use fallback, run manually:
 > ```bash
-> bash "$(find ~/.claude/plugins/cache -name install.sh | head -1)" --with-fallback
+> bash "$(find ~/.claude/plugins/cache -name setup.sh | head -1)" --with-fallback
 > ```
 
 ### Alternative — Local / Dev Install
@@ -92,9 +92,9 @@ Python dependencies (`playwright`, `openpyxl`, Chromium browser) are **installed
 ```bash
 git clone https://github.com/alo-exp/multai.git
 cd multi-ai-skills
-bash install.sh          # installs pip deps + Playwright Chromium + .env template
+bash setup.sh            # creates .venv, installs pip deps + Playwright Chromium + .env template
 # optional agent fallback:
-bash install.sh --with-fallback
+bash setup.sh --with-fallback
 
 # Load directly without marketplace registration:
 claude --plugin-dir ./multi-ai-skills
@@ -216,7 +216,7 @@ Synthesizes raw multi-AI responses into a single structured report. Called autom
 multi-ai-skills/
 ├── .claude-plugin/
 │   ├── plugin.json           ← Claude Code Plugin manifest
-│   └── hooks.json            ← PostInstall hook (runs install.sh)
+│   └── hooks.json            ← SessionStart hook (runs install.sh → setup.sh once)
 ├── skills/
 │   ├── orchestrator/
 │   │   ├── SKILL.md          ← Router + phases
@@ -255,7 +255,8 @@ multi-ai-skills/
 │   ├── Test-Strategy-and-Plan.md
 │   └── CICD-Strategy-and-Plan.md
 ├── tests/                    ← pytest suite
-├── install.sh                ← One-shot setup script
+├── setup.sh                  ← Canonical bootstrap — creates .venv, installs deps
+├── install.sh                ← Plugin hook delegate → setup.sh
 ├── requirements.txt          ← Core pip dependencies
 ├── pyproject.toml            ← Python packaging spec
 ├── settings.json             ← Default Claude Code plugin permissions
@@ -320,7 +321,7 @@ export GOOGLE_API_KEY="AIza..."        # recommended (free)
 export ANTHROPIC_API_KEY="sk-ant-..."  # alternative
 ```
 
-The fallback venv is set up by `install.sh --with-fallback` and auto-detected by the engine.
+The fallback venv is set up by `setup.sh --with-fallback` and auto-detected by the engine.
 
 ---
 
@@ -359,11 +360,14 @@ Both skills propose additions and ask for approval before writing. Additions are
 ## Running Tests
 
 ```bash
-# Full test suite:
-python3 -m pytest tests/ -v
+# Full test suite (using the project venv):
+skills/orchestrator/engine/.venv/bin/python -m pytest tests/ -v
+
+# Alternatively, from the engine directory:
+cd skills/orchestrator/engine && .venv/bin/python -m pytest ../../../tests/ -v
 
 # Specific test file:
-python3 -m pytest tests/test_rate_limiter.py -v
+skills/orchestrator/engine/.venv/bin/python -m pytest tests/test_rate_limiter.py -v
 
 # Engine budget check (smoke test — no browser):
 python3 skills/orchestrator/engine/orchestrator.py --budget --tier free
@@ -388,10 +392,10 @@ python3 skills/orchestrator/engine/orchestrator.py --budget --tier free
 
 | Requirement | Version | Notes |
 |---|---|---|
-| Python | ≥ 3.10 | 3.13 required for agent fallback |
+| Python | ≥ 3.11 | 3.13 required for agent fallback |
 | Google Chrome | latest | Must be installed; engine re-uses your profile |
-| playwright | ≥ 1.40.0 | Installed by `install.sh` |
-| openpyxl | ≥ 3.1.0 | Installed by `install.sh` |
+| playwright | ≥ 1.40.0 | Installed by `setup.sh` |
+| openpyxl | ≥ 3.1.0 | Installed by `setup.sh` |
 | Claude Code | latest | Skills are invoked as Claude Code plugin skills |
 
 ---

@@ -24,22 +24,33 @@ echo ""
 echo "MultAI Setup"
 echo "────────────────────────────────────────────"
 
-# ── Python version check ─────────────────────────────────────────────────────
-info "Checking Python version..."
-PYTHON=$(command -v python3 || die "python3 not found. Install Python 3.11+ first.")
-PY_VER=$("$PYTHON" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-PY_MAJOR=$("$PYTHON" -c "import sys; print(sys.version_info.major)")
-PY_MINOR=$("$PYTHON" -c "import sys; print(sys.version_info.minor)")
-
-if [[ "$PY_MAJOR" -lt 3 ]] || [[ "$PY_MAJOR" -eq 3 && "$PY_MINOR" -lt 11 ]]; then
-  die "Python 3.11+ required (found $PY_VER). Please upgrade: https://www.python.org/downloads/"
-fi
-success "Python $PY_VER"
-
-# ── Virtual environment ───────────────────────────────────────────────────────
-if [[ -d "$VENV_DIR" ]]; then
-  info "Virtual environment already exists at skills/orchestrator/engine/.venv — skipping creation."
+# ── Python version check + venv selection ────────────────────────────────────
+# If .venv already exists and has a working python, use it directly —
+# no need to re-validate the system python version on subsequent runs.
+if [[ -x "$VENV_DIR/bin/python" ]]; then
+  PYTHON="$VENV_DIR/bin/python"
+  PY_VER=$("$PYTHON" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+  info "Existing .venv Python $PY_VER — reusing"
 else
+  info "Checking Python version..."
+  # Search for python 3.11+ — prefer Homebrew, then system
+  PYTHON=""
+  for candidate in python3.13 python3.12 python3.11 python3; do
+    candidate_path=$(command -v "$candidate" 2>/dev/null || true)
+    if [[ -n "$candidate_path" ]]; then
+      PY_MAJOR=$("$candidate_path" -c "import sys; print(sys.version_info.major)" 2>/dev/null || echo 0)
+      PY_MINOR=$("$candidate_path" -c "import sys; print(sys.version_info.minor)" 2>/dev/null || echo 0)
+      if [[ "$PY_MAJOR" -ge 3 && "$PY_MINOR" -ge 11 ]]; then
+        PYTHON="$candidate_path"
+        break
+      fi
+    fi
+  done
+  [[ -z "$PYTHON" ]] && die "Python 3.11+ not found. Install it from https://www.python.org/downloads/ or via Homebrew: brew install python@3.13"
+  PY_VER=$("$PYTHON" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+  success "Python $PY_VER"
+
+  # ── Virtual environment ─────────────────────────────────────────────────────
   info "Creating virtual environment at skills/orchestrator/engine/.venv ..."
   "$PYTHON" -m venv "$VENV_DIR"
   success "Virtual environment created"

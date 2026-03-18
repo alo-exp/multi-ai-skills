@@ -4,6 +4,68 @@ All notable changes to `multi-ai-skills` are documented in this file.
 
 ---
 
+## [4.1.0] — 2026-03-18
+
+### Summary
+
+Dependency bootstrap overhaul. Introduced `setup.sh` as the canonical one-time installer, refactored `install.sh` to a thin delegate, fixed the `SessionStart` plugin hook chain, added `requirements.txt` under the engine directory, added a venv existence check in the orchestrator Phase 1, and updated all documentation for v4.1.
+
+---
+
+### New Files
+
+| File | Description |
+|------|-------------|
+| `setup.sh` | Canonical bootstrap script (Python 3.11+): creates `skills/orchestrator/engine/.venv`, installs `playwright>=1.40.0` and `openpyxl>=3.1.0`, runs `playwright install chromium`, creates `.env` template, runs smoke test. `--with-fallback` flag also installs `browser-use==0.12.2`, `anthropic>=0.76.0`, `fastmcp>=2.0.0`. Idempotent: reuses existing `.venv` on re-run without re-checking system Python version. |
+| `skills/orchestrator/engine/requirements.txt` | Explicit requirements file listing `playwright>=1.40.0` and `openpyxl>=3.1.0`. |
+| `tests/test_setup_bootstrap.py` | 17 new tests covering TC-SETUP-1/3, TC-VENV-1, TC-HOOK-1/2, TC-LAUNCH-1/2. Total test suite: 75 tests (was 58). |
+
+---
+
+### Updated Files
+
+| File | Change |
+|------|--------|
+| `install.sh` | Refactored from full install logic to a single-line delegate: `exec bash setup.sh "$@"`. Called by the `SessionStart` hook. |
+| `skills/orchestrator/SKILL.md` | Phase 1 now checks for `.venv` existence before invoking the engine. Shows `bash setup.sh` instructions if missing. |
+
+---
+
+### Plugin Hook Chain
+
+```
+SessionStart hook (hooks/hooks.json)
+    └──► install.sh  (delegates to setup.sh)
+              └──► setup.sh  (creates .venv, installs deps, writes .installed sentinel)
+```
+
+The `.installed` sentinel file prevents re-invocation on subsequent sessions.
+
+---
+
+### Installation Paths (v4.1)
+
+| Path | How dependencies are installed |
+|------|-------------------------------|
+| Plugin install (`claude plugin install`) | Automatic on first session start via `SessionStart` hook → `install.sh` → `setup.sh` |
+| skills.sh install (`npx skills add alo-exp/multai`) | Manual: user runs `bash setup.sh` after install. SKILL.md Phase 1 detects missing `.venv` and prompts. |
+| Clone / dev | Manual: `git clone` then `bash setup.sh` |
+
+---
+
+### Documentation Updates
+
+| File | Changes |
+|------|---------|
+| `README.md` | Quick Start updated: `bash install.sh` → `bash setup.sh`; plugin auto-install note; project structure updated; Python ≥3.11; Running Tests uses `.venv/bin/python` |
+| `USER-GUIDE.md` | Section 3.2 replaced with `bash setup.sh`; Section 3.3 uses `bash setup.sh --with-fallback`; Section 4 structure updated; Prerequisites Python 3.11+; Section 13 notes venv activation; Appendix C v4.1 entry |
+| `docs/SRS.md` | Version table v4.1; Section 1.1 v4.1 bullet; Section 1.3 new definitions; Section 3.11 new FRs (FR-SETUP-1–3, FR-HOOK-1–2, FR-VENV-1); NFR-05 Python 3.11+ |
+| `docs/Test-Strategy-and-Plan.md` | Version table v4.1; Section 2.8 new test cases (TC-SETUP-1–3, TC-VENV-1, TC-HOOK-1–2); Section 3.1 Python 3.11+ |
+| `docs/CICD-Strategy-and-Plan.md` | Version table v4.1; Stage 1 setup.sh note; Stage 2 bash syntax checks; Stage 4 smoke test; GitHub Actions syntax check step; Python 3.11+ |
+| `docs/Architecture-and-Design.md` | Version table v4.1; Section 6.11 Dependency Bootstrap (plugin path, skills.sh path, venv locations, sentinel) |
+
+---
+
 ## [4.0.0] — 2026-03-16
 
 ### Summary

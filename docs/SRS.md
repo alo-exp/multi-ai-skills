@@ -1,8 +1,8 @@
 # Software Requirements Specification (SRS)
 
 **Project:** Multi-AI Orchestrator Platform
-**Version:** 4.0
-**Date:** 2026-03-16
+**Version:** 4.1
+**Date:** 2026-03-18
 **Base Version:** multi-ai-skills/ (formerly solution-research-skill-260308A)
 
 | Version | Date | Summary |
@@ -12,6 +12,7 @@
 | 3.1 | 2026-03-14 | Rate Limiting Guardrails (rate_limiter.py, per-platform detection, staggered dispatch) |
 | 3.2 | 2026-03-14 | Task-Name Output Organisation + Auto-Collation (collate_responses.py, --task-name flag) |
 | 4.0 | 2026-03-16 | 5-skill architecture: landscape-researcher, engine owned by orchestrator, comparator owns matrix scripts, self-improving skills, domain enrichment from both researchers |
+| 4.1 | 2026-03-18 | Dependency bootstrap: setup.sh canonical installer; install.sh plugin hook delegate; SessionStart auto-install; orchestrator Phase 1 venv check |
 
 ---
 
@@ -21,12 +22,13 @@
 
 This document specifies the software requirements for the Multi-AI Orchestrator Platform — a local automation system that submits prompts to 7 AI platforms in parallel, collects responses, and supports downstream synthesis, comparison, and domain knowledge enrichment workflows.
 
-The system has evolved through five generations:
+The system has evolved through six generations:
 - **v2.0:** Decoupled engine + skills architecture; generic prompt handling
 - **v3.0:** Added comparison matrix capabilities (Python XLSX engine + Comparator skill)
 - **v3.1:** Added rate limiting guardrails to prevent platform throttling
 - **v3.2:** Added task-name output organisation and automatic raw response collation
 - **v4.0:** 5-skill architecture with landscape-researcher; engine owned by orchestrator skill; self-improving skills with run logs; dual domain enrichment
+- **v4.1:** Dependency bootstrap: `setup.sh` canonical installer; `install.sh` delegates to `setup.sh`; `SessionStart` hook auto-installs deps for plugin users; orchestrator Phase 1 venv check
 
 ### 1.2 Scope
 
@@ -52,6 +54,9 @@ The system submits user-provided prompts to 7 AI platforms in parallel (Claude.a
 | **launch_report.py** | Python script that starts an HTTP server and opens `preview.html?report=<path>` to display a landscape report (v4.0) |
 | **Self-Improve** | A phase in each skill where the skill appends a timestamped run log entry to its own SKILL.md after a successful run (v4.0) |
 | **Run Log** | A section in each SKILL.md that accumulates timestamped entries from Self-Improve phases (v4.0) |
+| **setup.sh** | The canonical one-time bootstrap script at the repo root; creates `skills/orchestrator/engine/.venv`, installs Python dependencies, runs `playwright install chromium`, and creates a `.env` template (v4.1) |
+| **SessionStart hook** | A Claude Code plugin lifecycle hook defined in `hooks/hooks.json` that fires `install.sh` (which delegates to `setup.sh`) on the first session start (v4.1) |
+| **.installed sentinel** | A file created by the `SessionStart` hook after successful setup; prevents `setup.sh` from being re-invoked on subsequent sessions (v4.1) |
 
 ---
 
@@ -135,7 +140,7 @@ The Orchestrator skill acts as a router (Phase 0 routing decision tree) and disp
 | FR-OS-01 | Accept a prompt (text or file path) from the user or calling skill | Must |
 | FR-OS-02 | Accept mode (DEEP/REGULAR), task name, and optional platform subset | Must |
 | FR-OS-03 | Verify Python environment and Chrome availability before running | Must |
-| FR-OS-04 | Invoke the engine CLI with `--task-name` to organise output in a named subdirectory | Must |
+| FR-OS-04 | Invoke the engine CLI with `--task-name` to organize output in a named subdirectory | Must |
 | FR-OS-05 | Read `status.json` and report terminal statuses to the user | Must |
 | FR-OS-06 | The engine auto-generates the raw archive; the skill reads and presents it | Must |
 | FR-OS-07 | NOT perform any consolidation/synthesis | Must |
@@ -250,6 +255,17 @@ The Orchestrator skill acts as a router (Phase 0 routing decision tree) and disp
 | FR-NEW-6 | `preview.html` is query-param driven: `?report=<path>` loads specified report; no param loads default | Must |
 | FR-NEW-7 | All 5 SKILL.md files contain a Self-Improve phase and a Run Log section | Must |
 
+### 3.11 v4.1 Dependency Bootstrap Requirements
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-SETUP-1 | `setup.sh` MUST create a virtual environment at `skills/orchestrator/engine/.venv` and install `playwright>=1.40.0` and `openpyxl>=3.1.0` | Must |
+| FR-SETUP-2 | `setup.sh --with-fallback` MUST also install `browser-use==0.12.2`, `anthropic>=0.76.0`, and `fastmcp>=2.0.0` | Should |
+| FR-SETUP-3 | `setup.sh` MUST be idempotent — re-running when `.venv` already exists MUST not fail | Must |
+| FR-HOOK-1 | The `SessionStart` hook MUST auto-invoke `setup.sh` (via `install.sh`) on first plugin session start | Must |
+| FR-HOOK-2 | The `SessionStart` hook MUST use an `.installed` sentinel file to prevent re-running setup on subsequent sessions | Must |
+| FR-VENV-1 | `orchestrator/SKILL.md` Phase 1 MUST check for `.venv` before invoking the engine and MUST show `bash setup.sh` instructions if missing | Must |
+
 ---
 
 ## 4. Non-Functional Requirements
@@ -260,7 +276,7 @@ The Orchestrator skill acts as a router (Phase 0 routing decision tree) and disp
 | NFR-02 | **Reliability:** Each platform runs independently; one failure does not block others | Must |
 | NFR-03 | **Extensibility:** Adding a new task type requires only new files under `skills/` and optionally `domains/`; no engine changes | Must |
 | NFR-04 | **Extensibility:** Adding a new AI platform requires only a new file under `skills/orchestrator/engine/platforms/` and config/rate-limit entries | Must |
-| NFR-05 | **Portability:** Runs on macOS, Linux, Windows with Python 3.10+ and Chrome installed | Should |
+| NFR-05 | **Portability:** Runs on macOS, Linux, Windows with Python 3.11+ and Chrome installed | Should |
 | NFR-06 | **Graceful degradation:** If ANTHROPIC_API_KEY not set, Agent fallback is disabled silently | Must |
 | NFR-07 | **Idempotency:** Orchestrator can be re-run; Chrome reuse via CDP preserves logins | Should |
 | NFR-08 | **Observability:** Structured logging; `status.json` for machine-readable results; `agent-fallback-log.json` for fallback events; `rate-limit-state.json` for usage state | Must |
