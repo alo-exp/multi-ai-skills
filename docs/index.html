@@ -13,8 +13,43 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
 
-/* ───── DESIGN TOKENS ───── */
+/* ───── DESIGN TOKENS — LIGHT (default) ───── */
 :root{
+  --bg-page:#f8f9fc;
+  --bg-card:#ffffff;
+  --bg-card-hover:#f1f5f9;
+  --bg-code:#f1f5f9;
+  --bg-hero:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 50%,#fdf2f8 100%);
+  --accent:#4f46e5;
+  --accent-light:#6366f1;
+  --accent-glow:rgba(99,102,241,.1);
+  --accent2:#7c3aed;
+  --accent3:#db2777;
+  --green:#059669;
+  --amber:#d97706;
+  --red:#dc2626;
+  --cyan:#0891b2;
+  --text-primary:#0f172a;
+  --text-secondary:#475569;
+  --text-dim:#94a3b8;
+  --border:#e2e8f0;
+  --border-hover:#cbd5e1;
+  --radius:12px;
+  --radius-lg:20px;
+  --radius-sm:8px;
+  --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --shadow-lg:0 20px 60px rgba(0,0,0,.08);
+  --shadow-glow:0 0 40px rgba(99,102,241,.06);
+  --nav-bg:rgba(248,249,252,.9);
+  --nav-mobile-bg:rgba(248,249,252,.98);
+  --section-alt:rgba(241,245,249,.6);
+  --table-row-hover:rgba(99,102,241,.03);
+  --skill-phase-border:rgba(226,232,240,.8);
+}
+
+/* ───── DARK THEME ───── */
+[data-theme="dark"]{
   --bg-page:#0a0a0f;
   --bg-card:#12121a;
   --bg-card-hover:#181825;
@@ -34,13 +69,18 @@ html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
   --text-dim:#64748b;
   --border:#1e293b;
   --border-hover:#334155;
-  --radius:12px;
-  --radius-lg:20px;
-  --radius-sm:8px;
-  --font-sans:'Inter',system-ui,-apple-system,sans-serif;
-  --font-mono:'JetBrains Mono',monospace;
   --shadow-lg:0 20px 60px rgba(0,0,0,.4);
   --shadow-glow:0 0 40px rgba(99,102,241,.08);
+  --nav-bg:rgba(10,10,15,.85);
+  --nav-mobile-bg:rgba(10,10,15,.97);
+  --section-alt:rgba(18,18,26,.4);
+  --table-row-hover:rgba(99,102,241,.03);
+  --skill-phase-border:rgba(30,41,59,.5);
+}
+
+/* ───── THEME TRANSITION ───── */
+body,nav,section,.feature-card,.skill-card,.platform-pill,.install-block,.code-block,.arch-diagram,.callout,.comparison-table td,.comparison-table th{
+  transition:background .25s,background-color .25s,border-color .25s,color .25s,box-shadow .25s;
 }
 
 body{
@@ -72,7 +112,7 @@ body{
 /* ───── NAV ───── */
 nav{
   position:fixed;top:0;left:0;right:0;z-index:100;
-  background:rgba(10,10,15,.85);
+  background:var(--nav-bg);
   backdrop-filter:blur(20px);
   border-bottom:1px solid var(--border);
   padding:0 24px;
@@ -106,7 +146,7 @@ nav .nav-cta:hover{background:var(--accent-light);box-shadow:0 0 20px rgba(99,10
   .nav-toggle{display:block}
   nav .nav-links.active{
     display:flex;flex-direction:column;position:absolute;
-    top:64px;left:0;right:0;background:rgba(10,10,15,.97);
+    top:64px;left:0;right:0;background:var(--nav-mobile-bg);
     padding:20px 24px;gap:16px;border-bottom:1px solid var(--border);
   }
 }
@@ -190,7 +230,7 @@ nav .nav-cta:hover{background:var(--accent-light);box-shadow:0 0 20px rgba(99,10
 
 /* ───── SECTION HEADINGS ───── */
 section{padding:80px 0}
-section:nth-child(even){background:rgba(18,18,26,.4)}
+section:nth-child(even){background:var(--section-alt)}
 .section-label{
   text-transform:uppercase;font-size:.75rem;font-weight:700;
   letter-spacing:.12em;color:var(--accent-light);margin-bottom:12px;
@@ -264,7 +304,7 @@ section:nth-child(even){background:rgba(18,18,26,.4)}
 .skill-phases{padding:0 28px 28px}
 .skill-phase{
   display:flex;align-items:flex-start;gap:12px;
-  padding:8px 0;border-top:1px solid rgba(30,41,59,.5);
+  padding:8px 0;border-top:1px solid var(--skill-phase-border);
 }
 .skill-phase:first-child{border-top:none}
 .phase-num{
@@ -340,11 +380,11 @@ section:nth-child(even){background:rgba(18,18,26,.4)}
 }
 .comparison-table td{
   padding:14px 16px;font-size:.875rem;
-  border-bottom:1px solid rgba(30,41,59,.4);
+  border-bottom:1px solid var(--skill-phase-border);
   color:var(--text-secondary);
 }
 .comparison-table td:first-child{color:var(--text-primary);font-weight:600}
-.comparison-table tr:hover td{background:rgba(99,102,241,.03)}
+.comparison-table tr:hover td{background:var(--table-row-hover)}
 .check{color:var(--green);font-weight:700}
 .cross{color:var(--text-dim)}
 
@@ -419,7 +459,18 @@ footer .footer-links{display:flex;gap:24px}
       <li><a href="#how-it-works">How It Works</a></li>
       <li><a href="#docs">Docs</a></li>
     </ul>
-    <a href="https://github.com/alo-exp/multai" class="nav-cta" target="_blank">GitHub</a>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button id="theme-toggle" aria-label="Toggle light/dark mode" onclick="toggleTheme()" style="
+        width:40px;height:40px;border-radius:50%;border:1px solid var(--border);
+        background:var(--bg-card);color:var(--text-secondary);font-size:1.1rem;
+        display:flex;align-items:center;justify-content:center;cursor:pointer;
+        transition:all .2s;flex-shrink:0;
+      " onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent-light)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+        <span id="theme-icon">🌙</span>
+      </button>
+      <a href="https://github.com/alo-exp/multai" class="nav-cta" target="_blank">GitHub</a>
+    </div>
   </div>
 </nav>
 
@@ -931,7 +982,22 @@ multai/
 
 <!-- ────── SCRIPTS ────── -->
 <script>
-// Tab switching
+// ── Theme ──
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.getElementById('theme-icon').textContent = dark ? '☀️' : '🌙';
+  localStorage.setItem('multai-theme', dark ? 'dark' : 'light');
+}
+function toggleTheme() {
+  applyTheme(document.documentElement.getAttribute('data-theme') !== 'dark');
+}
+// Init: light by default, honour saved preference
+(function(){
+  const saved = localStorage.getItem('multai-theme');
+  applyTheme(saved === 'dark');
+})();
+
+// ── Tab switching ──
 function switchTab(btn, tabId) {
   btn.closest('.install-block').querySelectorAll('.install-tab').forEach(t => t.classList.remove('active'));
   btn.closest('.install-block').querySelectorAll('.install-code').forEach(c => c.classList.remove('active'));
@@ -939,12 +1005,10 @@ function switchTab(btn, tabId) {
   document.getElementById(tabId).classList.add('active');
 }
 
-// Scroll-triggered fade-in
+// ── Scroll-triggered fade-in ──
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-    }
+    if (entry.isIntersecting) entry.target.classList.add('visible');
   });
 }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
