@@ -10,7 +10,7 @@
 | 2.0 | 2026-03-13 | Generic restructuring: engine, orchestrator, consolidator, solution-researcher, domain knowledge |
 | 3.0 | 2026-03-13 | Generic Comparator Skill + Python Matrix Engine (matrix_ops.py, matrix_builder.py) |
 | 3.1 | 2026-03-14 | Rate Limiting Guardrails (rate_limiter.py, per-platform detection, staggered dispatch) |
-| 3.2 | 2026-03-14 | Task-Name Output Organisation + Auto-Collation (collate_responses.py, --task-name flag) |
+| 3.2 | 2026-03-14 | Task-Name Output Organization + Auto-Collation (collate_responses.py, --task-name flag) |
 | 4.0 | 2026-03-16 | 5-skill architecture: landscape-researcher, engine owned by orchestrator, comparator owns matrix scripts, self-improving skills, domain enrichment from both researchers |
 | 4.1 | 2026-03-18 | Dependency bootstrap: setup.sh canonical installer; install.sh plugin hook delegate; SessionStart auto-install; orchestrator Phase 1 venv check |
 
@@ -26,7 +26,7 @@ The system has evolved through six generations:
 - **v2.0:** Decoupled engine + skills architecture; generic prompt handling
 - **v3.0:** Added comparison matrix capabilities (Python XLSX engine + Comparator skill)
 - **v3.1:** Added rate limiting guardrails to prevent platform throttling
-- **v3.2:** Added task-name output organisation and automatic raw response collation
+- **v3.2:** Added task-name output organization and automatic raw response collation
 - **v4.0:** 5-skill architecture with landscape-researcher; engine owned by orchestrator skill; self-improving skills with run logs; dual domain enrichment
 - **v4.1:** Dependency bootstrap: `setup.sh` canonical installer; `install.sh` delegates to `setup.sh`; `SessionStart` hook auto-installs deps for plugin users; orchestrator Phase 1 venv check
 
@@ -282,7 +282,7 @@ The Orchestrator skill acts as a router (Phase 0 routing decision tree) and disp
 | NFR-08 | **Observability:** Structured logging; `status.json` for machine-readable results; `agent-fallback-log.json` for fallback events; `rate-limit-state.json` for usage state | Must |
 | NFR-09 | **Security:** No credentials stored in code; Chrome profile reuse preserves platform logins without exposing passwords | Must |
 | NFR-10 | **Rate limit safety:** System must not submit requests to a platform when its rolling-window budget is exhausted | Must |
-| NFR-11 | **Output organisation:** All run outputs must be isolated in a named subdirectory under `reports/`; the root `reports/` directory is not written to directly | Must |
+| NFR-11 | **Output organization:** All run outputs must be isolated in a named subdirectory under `reports/`; the root `reports/` directory is not written to directly | Must |
 | NFR-12 | **XLSX integrity:** All 6 Golden Rules (no hardcoded styles, unmerge/re-merge, no insert_rows, row-type detection, cache styles before reorder, validate features) must be enforced by code, not documentation | Must |
 
 ---

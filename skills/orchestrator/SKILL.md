@@ -12,7 +12,7 @@ description: >
     landscape" / "Gartner-style" → landscape-researcher skill
 
   - Product URL + research intent, specific product name + evaluate/benchmark/
-    research/analyse, "competitive intelligence", "capabilities report" →
+    research/analyze, "competitive intelligence", "capabilities report" →
     solution-researcher skill
 
   - "comparison matrix" / "add platform" / "update matrix" / "combo column" /
@@ -48,7 +48,7 @@ Routing decision tree:
   → ROUTE: landscape-researcher skill (invoke its Phase 0 onward)
 
 Product URL + research intent
-  OR specific product name + evaluate / benchmark / research / analyse
+  OR specific product name + evaluate / benchmark / research / analyze
   OR "competitive intelligence" / "capabilities report"
   → ROUTE: solution-researcher skill (invoke its Phase 0 onward)
 

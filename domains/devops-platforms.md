@@ -33,9 +33,9 @@ When researching DevOps platforms, ensure coverage of these domain-specific capa
 - **IDP (Internal Developer Platform):** Self-service layer abstracting infrastructure complexity for developers
 - **Platform engineering:** Discipline of building and maintaining IDPs to improve developer productivity
 - **Golden paths:** Opinionated, pre-configured templates that encode best practices for common development tasks
-- **Software catalog:** Central registry of all services, APIs, and resources in an organisation (e.g., Backstage catalog)
+- **Software catalog:** Central registry of all services, APIs, and resources in an organization (e.g., Backstage catalog)
 - **Scorecard:** Automated compliance/quality check applied to catalog entries to track engineering standards
-- **RBAC:** Role-Based Access Control — assigning permissions based on organisational roles
+- **RBAC:** Role-Based Access Control — assigning permissions based on organizational roles
 - **OPA (Open Policy Agent):** Policy engine for unified policy enforcement across the stack
 - **SBOM (Software Bill of Materials):** Inventory of all components in a software artifact for supply chain security
 - **SAST/DAST:** Static/Dynamic Application Security Testing

@@ -883,7 +883,7 @@ source skills/orchestrator/engine/.venv/bin/activate
 cd skills/orchestrator/engine && python -m pytest ../../../tests/ -v --tb=short
 ```
 
-**Expected output:** `58 passed` in ~2s
+**Expected output:** `75 passed` in ~2s
 
 ### Test Coverage
 
@@ -929,7 +929,7 @@ A `Makefile` is provided for local development. Run `make check` before every co
 
 The CI workflow (`.github/workflows/ci.yml`) runs on every push and PR:
 
-1. **Install** — `pip install -r requirements.txt && pip install pytest`
+1. **Install** — `pip install -r skills/orchestrator/engine/requirements.txt && pip install pytest`
 2. **Compile** — all engine + comparator + landscape + platform files
 3. **Unit tests** — full pytest suite
 4. **Regression** — grep checks + RATE_LIMITS config validation + CLI flag checks + landscape smoke

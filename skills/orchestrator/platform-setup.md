@@ -78,7 +78,7 @@ The critical distinction: **contenteditable divs** vs **React-managed textareas*
 ### DeepSeek
 - **`page.fill()` + event dispatch:** React textarea requires native input events. `execCommand` and `nativeInputValueSetter` both fail.
 - **URL access failure:** May be unable to fetch the target URL. Tab title shows "URL Access Failure".
-- **Homepage-only analysis:** Even when URL access succeeds, DeepThink R1 may only analyse the homepage.
+- **Homepage-only analysis:** Even when URL access succeeds, DeepThink R1 may only analyze the homepage.
 
 ### Google Gemini
 - **Capacity errors:** Deep Research may fail with "at full capacity" error. Retry 3 times with 30s waits.

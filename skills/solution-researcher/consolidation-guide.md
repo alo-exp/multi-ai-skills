@@ -98,7 +98,7 @@ Standalone, product-agnostic hierarchy for competitive benchmarking. Format:
 - **ChatGPT (Deep Research):** Highly reliable in DEEP mode — extensive web crawling. REGULAR mode: check for content duplication artefacts.
 - **Copilot (Deep Research):** Often crawls GitHub README — high quality for open-source products. May fail due to voice mode hazard.
 - **Grok:** Receives condensed prompt (~900 chars) — shallower analysis expected. Weight accordingly.
-- **DeepSeek:** May fail URL access entirely. Even when successful, may only analyse homepage. Exclude if response quality is very low.
+- **DeepSeek:** May fail URL access entirely. Even when successful, may only analyze homepage. Exclude if response quality is very low.
 - **Claude.ai:** In REGULAR mode, often produces the deepest single-source analysis (~2-5x content vs others). Weight heavily when available.
 - **Gemini (Deep Research):** High quality when successful. May fail with capacity errors.
 

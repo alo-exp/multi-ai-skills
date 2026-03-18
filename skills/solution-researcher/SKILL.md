@@ -9,7 +9,7 @@ description: >
   USE THIS SKILL whenever the user asks to research a software product, run
   competitive intelligence, benchmark a tool, or find out what a platform can do.
   Trigger when the user provides a product URL, names a specific software product
-  and asks to research/analyse/evaluate it, or says "competitive intelligence",
+  and asks to research/analyze/evaluate it, or says "competitive intelligence",
   "capabilities report", "benchmark this tool", or "what can X do?".
 
   Supports any product domain (DevOps, PM tools, security, etc.) via pluggable

@@ -27,7 +27,7 @@ echo "────────────────────────�
 # ── Python version check + venv selection ────────────────────────────────────
 # If .venv already exists and has a working python, use it directly —
 # no need to re-validate the system python version on subsequent runs.
-if [[ -x "$VENV_DIR/bin/python" ]]; then
+if [[ -x "$VENV_DIR/bin/python" ]] && "$VENV_DIR/bin/python" --version > /dev/null 2>&1; then
   PYTHON="$VENV_DIR/bin/python"
   PY_VER=$("$PYTHON" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
   info "Existing .venv Python $PY_VER — reusing"
@@ -81,9 +81,13 @@ fi
 
 # ── Smoke test ────────────────────────────────────────────────────────────────
 info "Running smoke test..."
-"$PYTHON_VENV" "$ENGINE_DIR/orchestrator.py" --budget --tier free > /dev/null 2>&1 \
-  && success "Engine smoke test passed" \
-  || warn "Smoke test returned non-zero — check your Chrome / profile setup (see skills/orchestrator/platform-setup.md)"
+if smoke_output=$("$PYTHON_VENV" "$ENGINE_DIR/orchestrator.py" --budget --tier free 2>&1); then
+  success "Engine smoke test passed"
+else
+  warn "Smoke test returned non-zero — output:"
+  echo "$smoke_output" | head -10 | sed 's/^/    /'
+  warn "Check your Chrome / profile setup (see skills/orchestrator/platform-setup.md)"
+fi
 
 echo ""
 echo "────────────────────────────────────────────"

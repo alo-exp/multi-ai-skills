@@ -32,7 +32,7 @@ Playwright Engine ──► 7 AI Platforms ──► reports/
 | Capability | Detail |
 |---|---|
 | **Parallel submission** | All 7 platforms run concurrently via `asyncio.gather()` |
-| **Intelligent routing** | Orchestrator analyses intent and dispatches to the right skill automatically |
+| **Intelligent routing** | Orchestrator analyzes intent and dispatches to the right skill automatically |
 | **Market landscape reports** | 9-section structured reports (Top 20 commercial + OSS, positioning matrices, trends) |
 | **Solution research** | Deep-dive on a product URL — capability inventory, competitive context, XLSX scoring |
 | **XLSX comparison matrix** | Capability matrix auto-scored and reordered across platforms |
@@ -182,7 +182,7 @@ Produces a 9-section structured Market Landscape Report across commercial and OS
 
 Researches a specific product or URL in depth — capabilities, integrations, pricing, competitive context — and optionally scores it in the comparison matrix.
 
-**Triggers:** "research humanitec.com", "evaluate Backstage", "analyse Port.io"
+**Triggers:** "research humanitec.com", "evaluate Backstage", "analyze Port.io"
 
 **Output:** `reports/{task-name}/{Product} - Consolidated Intelligence Report.md` + optional XLSX matrix scoring
 
@@ -257,7 +257,6 @@ multi-ai-skills/
 ├── tests/                    ← pytest suite
 ├── setup.sh                  ← Canonical bootstrap — creates .venv, installs deps
 ├── install.sh                ← Plugin hook delegate → setup.sh
-├── requirements.txt          ← Core pip dependencies
 ├── pyproject.toml            ← Python packaging spec
 ├── settings.json             ← Default Claude Code plugin permissions
 └── USER-GUIDE.md             ← Comprehensive usage reference

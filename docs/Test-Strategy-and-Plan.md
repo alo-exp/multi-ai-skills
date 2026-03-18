@@ -87,7 +87,7 @@ All tests must use a temporary state file path to avoid touching the real `~/.ch
 | UT-RL-09 | Expired records pruned on load | Add records older than `window_seconds`; reload | Expired records not counted |
 | UT-RL-10 | Daily cap enforced | `daily_cap=3`; record 3 usages today | 4th preflight blocked with daily cap reason |
 | UT-RL-11 | Staggered order: most budget first | 3 platforms: 1 used, 1 at 50%, 1 fresh | Fresh platform at delay=0, used platform last |
-| UT-RL-12 | Rate-limited platform penalised in stagger order | 1 platform recently rate-limited | Rate-limited platform sorted last |
+| UT-RL-12 | Rate-limited platform penalized in stagger order | 1 platform recently rate-limited | Rate-limited platform sorted last |
 | UT-RL-13 | Budget summary returns correct remaining count | Record 2 usages on claude_ai | `summary["claude_ai"]["remaining"] == total - 2` |
 | UT-RL-14 | `free` and `paid` tier configs differ | Compare `RateLimiter("free")` vs `RateLimiter("paid")` budgets | Paid has higher `max_requests` |
 
