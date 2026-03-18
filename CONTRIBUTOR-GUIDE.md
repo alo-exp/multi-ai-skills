@@ -886,7 +886,7 @@ source skills/orchestrator/engine/.venv/bin/activate
 cd skills/orchestrator/engine && python -m pytest ../../../tests/ -v --tb=short
 ```
 
-**Expected output:** `93 passed` in ~4s
+**Expected output:** `96 passed` in ~4s
 
 ### Test Coverage
 
