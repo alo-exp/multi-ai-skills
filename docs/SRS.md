@@ -1,7 +1,7 @@
 # Software Requirements Specification (SRS)
 
 **Project:** MultAI
-**Version:** 0.2.260318C Alpha
+**Version:** 0.2.260319A Alpha
 **Date:** 2026-03-18
 **Base Version:** multai/ (formerly multi-ai-skills/, solution-research-skill-260308A)
 
