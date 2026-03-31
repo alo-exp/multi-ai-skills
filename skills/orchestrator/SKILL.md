@@ -1,8 +1,12 @@
 ---
 name: multai
 description: >
-  Intelligent Multi-AI Router & Orchestrator. Owns and invokes the
-  Playwright/Browser-Use multi-AI engine at skills/orchestrator/engine/.
+  Intelligent Multi-AI Router & Orchestrator. Submits prompts to 7 AI platforms
+  simultaneously (or sequentially in Cowork) and synthesizes results.
+
+  Supports two runtimes automatically detected at startup:
+    • Code tab (Mac): Playwright/Browser-Use engine — parallel, full-featured
+    • Cowork tab (Linux sandbox): Claude-in-Chrome MCP — sequential, zero-setup auth
 
   This skill is the PRIMARY ENTRY POINT for all research and multi-AI tasks.
   It reads the user's intent and routes to the correct specialist skill:
@@ -36,12 +40,49 @@ and consolidates generically. Follow the phases below.
 
 ---
 
-> **CRITICAL — NEVER USE BROWSER TOOLS DIRECTLY**
-> This skill runs its own Playwright-based browser automation engine. You must NEVER
-> use Claude-in-Chrome MCP tools, computer-use tools, browser MCP tools, or any other
-> form of manual browser automation to fulfil a research task. Doing so conflicts with
-> the engine and defeats the purpose of parallel multi-AI submission. ALWAYS execute
-> the engine by running the Python script in a Bash tool call (Phase 2 below).
+> **RUNTIME RULES — READ BEFORE ACTING**
+>
+> This skill operates in two modes depending on where it runs:
+>
+> **Code tab (Mac — Darwin):** Use ONLY the Playwright engine (Phase 2). NEVER use
+> Claude-in-Chrome MCP tools, computer-use tools, or any manual browser tools.
+> They conflict with the engine and defeat parallel execution.
+>
+> **Cowork tab (Linux sandbox):** The Playwright engine cannot run here. Use ONLY
+> the Claude-in-Chrome MCP path (Phase 2-Cowork). The engine Python script will
+> fail or produce empty sessions in this environment.
+>
+> Phase 0a below detects the runtime. Follow its output to determine which path to take.
+
+---
+
+## Phase 0a — Runtime Detection
+
+Run this before anything else to determine which execution path to use:
+
+```bash
+python3 - <<'EOF'
+import sys, shutil, socket
+runtime = "cowork"
+if sys.platform != "linux":
+    runtime = "code-tab"
+elif shutil.which("google-chrome") or shutil.which("chromium"):
+    runtime = "code-tab"
+else:
+    try:
+        s = socket.create_connection(("localhost", 9222), timeout=1)
+        s.close()
+        runtime = "code-tab"
+    except OSError:
+        pass
+print(f"RUNTIME: {runtime}")
+EOF
+```
+
+- **`RUNTIME: code-tab`** → continue to Phase 0, then follow the **Code Tab path** (Phases 1–2)
+- **`RUNTIME: cowork`** → continue to Phase 0, then follow the **Cowork path** (Phase 2-Cowork)
+
+Tell the user which runtime was detected before proceeding.
 
 ---
 
@@ -92,9 +133,9 @@ Wait for explicit confirmation before continuing. If the user says 'cancel', sto
 
 ---
 
-## Phase 1 — Setup (Direct Multi-AI Path)
+## Phase 1 — Setup (Code Tab · Direct Multi-AI Path)
 
-*Skip this phase if you've routed to a specialist skill.*
+*Skip this phase if you've routed to a specialist skill, or if runtime is Cowork (go to Phase 2-Cowork).*
 
 ### Accept inputs:
 - **Prompt** — the full prompt text, or a path to a prompt file (required)
@@ -131,7 +172,7 @@ Do not proceed to Phase 2 until the venv exists.
 
 ---
 
-## Phase 2 — Run the Engine
+## Phase 2 — Run the Engine (Code Tab)
 
 ```bash
 cd <workspace-root>
@@ -183,6 +224,131 @@ Check budget before running:
 ```bash
 python3 skills/orchestrator/engine/orchestrator.py --prompt "test" --budget --tier free
 ```
+
+---
+
+## Phase 2-Cowork — Cowork Path (Claude-in-Chrome)
+
+*Only follow this phase if Phase 0a detected `RUNTIME: cowork`. Skip if Code tab.*
+
+The Playwright engine cannot run in the Cowork sandbox. Use the Claude-in-Chrome MCP
+path instead: Claude controls the user's real Mac Chrome directly, where sessions are
+already authenticated.
+
+### Step 1 — Check Claude-in-Chrome connection
+
+```
+mcp__Claude_in_Chrome__tabs_context_mcp(createIfEmpty=False)
+```
+
+**If the result contains "not connected" or similar failure:**
+
+> MultAI requires Claude-in-Chrome to run in Cowork.
+>
+> To continue:
+> - **Option A (Cowork):** Open Chrome → ensure the Claude-in-Chrome extension is
+>   installed and signed in → retry this skill
+> - **Option B (Code tab):** Switch to the Code tab where MultAI runs natively
+>   with full parallel execution across all 7 platforms simultaneously
+>
+> The Code tab is recommended for best performance.
+
+Stop here. Do not attempt the Playwright engine.
+
+**If connected:** proceed to Step 2 and inform the user:
+
+> Running in Cowork mode — using Claude-in-Chrome path.
+> Platforms will be queried sequentially (one at a time) rather than in parallel.
+> Make sure you are signed into the AI platforms in Chrome.
+
+---
+
+### Step 2 — Sequential platform execution
+
+Query each platform in order: **Gemini → Claude.ai → ChatGPT → Copilot → Perplexity → Grok → DeepSeek**
+
+For each platform, use this pattern (adapt selectors from the table below):
+
+**a. Open or reuse a tab:**
+```
+mcp__Claude_in_Chrome__tabs_create_mcp()        # get tabId
+mcp__Claude_in_Chrome__navigate(url=PLATFORM_URL, tabId=tabId)
+```
+Wait ~3s for page load.
+
+**b. Check if signed in:**
+```
+mcp__Claude_in_Chrome__get_page_text(tabId=tabId)
+```
+If the page text contains a login signal (see table below), skip this platform and note `needs_login`.
+
+**c. Inject the prompt:**
+
+For `contenteditable` inputs:
+```
+mcp__Claude_in_Chrome__javascript_tool(action="javascript_exec", tabId=tabId, text="""
+    const el = document.querySelector('INPUT_SEL');
+    el.focus();
+    document.execCommand('selectAll');
+    document.execCommand('insertText', false, PROMPT_TEXT);
+    el.dispatchEvent(new Event('input', {bubbles: true}));
+""")
+```
+
+For `textarea` inputs:
+```
+mcp__Claude_in_Chrome__javascript_tool(action="javascript_exec", tabId=tabId, text="""
+    const el = document.querySelector('INPUT_SEL');
+    const nativeInput = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
+    nativeInput.call(el, PROMPT_TEXT);
+    el.dispatchEvent(new Event('input', {bubbles: true}));
+""")
+```
+
+**d. Submit:**
+```
+mcp__Claude_in_Chrome__javascript_tool(action="javascript_exec", tabId=tabId, text="""
+    document.querySelector('SUBMIT_SEL').click();
+""")
+```
+Or use `mcp__Claude_in_Chrome__find` + `mcp__Claude_in_Chrome__form_input` as fallbacks.
+
+**e. Wait and extract:**
+Poll every 15s up to 10 minutes (REGULAR) / 20 minutes (DEEP):
+```
+mcp__Claude_in_Chrome__get_page_text(tabId=tabId)
+```
+Declare complete when the page text has not grown for 2 consecutive polls.
+
+---
+
+### Platform selectors reference
+
+| Platform | URL | Input selector | Input type | Submit selector | Login signals |
+|---|---|---|---|---|---|
+| Google Gemini | https://gemini.google.com | `rich-textarea .ql-editor, div[contenteditable='true'][role='textbox']` | contenteditable | `button[aria-label='Send message']` | "Sign in", "Log in" |
+| Claude.ai | https://claude.ai/new | `div[contenteditable='true']` | contenteditable | `button[aria-label*='Send']` | "Sign in", "Continue with Google" |
+| ChatGPT | https://chat.openai.com | `#prompt-textarea` | contenteditable | `button[data-testid='send-button']` | "Log in", "Sign up" |
+| Copilot | https://copilot.microsoft.com | `textarea[placeholder*='Message']` | textarea | `button[aria-label*='Submit']` | "Sign in", "Microsoft account" |
+| Perplexity | https://www.perplexity.ai | `textarea[placeholder*='Ask'], div[contenteditable='true']` | contenteditable | `button[type='submit']` | "Log in", "Sign up" |
+| Grok | https://grok.com | `div[contenteditable='true'].ProseMirror, div[contenteditable='true']` | contenteditable | `button[aria-label*='Send']` | "Log in", "Sign in" |
+| DeepSeek | https://chat.deepseek.com | `textarea#chat-input, textarea` | textarea | `button[aria-label*='Send']` | "Log in", "Sign in" |
+
+Canonical selectors are also maintained in `skills/orchestrator/engine/platforms/chrome_selectors.py`.
+
+---
+
+### Step 3 — Collect results
+
+After all platforms complete (or are skipped), write each response to:
+`reports/<task-name>/<Platform>-raw-response.md`
+
+Then run collation manually:
+```bash
+python3 skills/orchestrator/engine/collate_responses.py reports/<task-name>/ "<Task Name>"
+```
+
+Proceed to Phase 5 (Invoke Consolidator) using the collated archive.
 
 ---
 
