@@ -1,5 +1,5 @@
 ---
-name: multi-ai-orchestrator
+name: multai
 description: >
   Intelligent Multi-AI Router & Orchestrator. Owns and invokes the
   Playwright/Browser-Use multi-AI engine at skills/orchestrator/engine/.

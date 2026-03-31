@@ -6,6 +6,16 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.260401A Alpha — Rename orchestrator skill to `/multai`
+
+**Date:** 2026-04-01
+
+### UX: Skill Renamed
+
+Renamed the primary entry-point skill from `multi-ai-orchestrator` to `multai` — shorter, consistent with the project brand, and unambiguous. Users invoke it as `/multai`. Sub-skills (landscape-researcher, solution-researcher, comparator, consolidator) remain available internally for routing but are no longer surfaced directly.
+
+---
+
 ## 0.2.260331A Alpha — Orchestration Reliability & Tab Reuse
 
 **Date:** 2026-03-31
