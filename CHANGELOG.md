@@ -6,6 +6,65 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.260331A Alpha — Orchestration Reliability & Tab Reuse
+
+**Date:** 2026-03-31
+
+### Engine: 7 Reliability Fixes
+
+#### 1 — Explicit Playwright-Only Enforcement (SKILL.md)
+Added a prominent `CRITICAL` banner to `skills/orchestrator/SKILL.md` explicitly banning Claude-in-Chrome MCP tools, computer-use tools, and any manual browser automation from being used in place of the Python Playwright engine. Prevents the host AI from attempting to do browser automation itself instead of invoking the script.
+
+#### 2 — Sign-In Page Detection
+New `is_sign_in_page()` method on `BasePlatform` detects login/sign-in pages via URL pattern matching (`/login`, `/signin`, `accounts.google.com`, etc.) and password-field presence. When detected, the engine attempts agent fallback to navigate past the page; if still on a login screen, returns a clear `STATUS_NEEDS_LOGIN` (🔑) result rather than silently failing or hanging.
+
+New status code `STATUS_NEEDS_LOGIN = "needs_login"` added to `config.py` with a 🔑 icon in `STATUS_ICONS`.
+
+#### 3 — Broader Agent Fallback Coverage
+Agent fallback is now triggered in additional code paths previously missing coverage:
+- Navigation failure (`page.goto()` errors)
+- `click_send()` errors (previously fell through to Enter key only)
+- `configure_mode()` errors (previously re-raised without agent attempt)
+
+#### 4 — Pre-Flight: Warn-Only, Never Skip
+Pre-flight rate-limit checks changed from a hard gate to warnings only. All requested platforms now always proceed to the browser — a platform is excluded only if it:
+- Shows a sign-in page (`needs_login`)
+- Is network-unreachable (`failed`)
+- Returns on-page quota exhaustion (`rate_limited`)
+
+This eliminates the prior behaviour where platforms were silently skipped due to budget/cooldown state.
+
+#### 5 — Dynamic Global Timeout
+The global `asyncio.wait_for` ceiling is now calculated dynamically:
+
+```
+global_timeout = max(per_platform_timeouts) + (num_platforms − 1) × stagger_delay + 60s
+```
+
+This ensures the last staggered platform always gets its full per-platform wait time before the hard ceiling fires, preventing premature cancellation of slow-finishing platforms.
+
+#### 6 — Follow-Up Mode (`--followup`)
+New `--followup` CLI flag. When set, the engine finds each platform's existing open browser tab (matched by URL domain) and injects the new prompt directly into the current conversation — no navigation, no mode reconfiguration, no new tabs. Use this for follow-up questions on the same research topic.
+
+#### 7 — Tab Reuse for New Topics
+Default behaviour (without `--followup`): the engine still finds existing open tabs for each platform, but navigates to the new-conversation URL within the found tab rather than opening a new one. Tab URLs are persisted to `~/.chrome-playwright/tab-state.json` after each run.
+
+New `PLATFORM_URL_DOMAINS` constant in `config.py` maps each platform to its hostname for tab matching.
+
+### Tests
+- `UT-OR-12`: `--followup` flag defaults to `False`, set to `True` when supplied
+- `UT-CF-09`: `PLATFORM_URL_DOMAINS` has 7 entries matching `PLATFORM_URLS` keys
+- `UT-CF-10`: `STATUS_NEEDS_LOGIN` defined and present in `STATUS_ICONS`
+- Total: 96 → **98 tests**
+
+### Website & Docs
+- `docs/index.html`: dark mode now default on first visit
+- `docs/index.html`: comparison table headings center-aligned
+- `README.md`: rate limiting, agent fallback, and tab reuse sections updated
+- All doc headers and version badge bumped to `0.2.260331A Alpha`
+
+---
+
 ## 0.2.260318A Alpha — Release Pipeline & Doc Restructure
 
 **Date:** 2026-03-18

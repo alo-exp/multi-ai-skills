@@ -36,8 +36,10 @@ Playwright Engine ──► 7 AI Platforms ──► reports/
 | **Market landscape reports** | 9-section structured reports (Top 20 commercial + OSS, positioning matrices, trends) |
 | **Solution research** | Deep-dive on a product URL — capability inventory, competitive context, XLSX scoring |
 | **XLSX comparison matrix** | Capability matrix auto-scored and reordered across platforms |
-| **Rate limiting** | Per-platform budget + cooldown + daily cap, persisted across sessions |
-| **Agent fallback** | Vision-based `browser-use` agent kicks in automatically when a UI selector fails |
+| **Rate limiting** | Per-platform budget tracking; warns on low budget but never skips a platform — only sign-in failures, unreachable hosts, or on-page quota exhaustion exclude a platform |
+| **Agent fallback** | Vision-based `browser-use` agent kicks in automatically when a UI selector fails, including navigation errors and sign-in pages |
+| **Sign-in detection** | Detects login/sign-in pages and returns a clear `needs_login` status rather than silently failing |
+| **Tab reuse** | Existing browser tabs are reused across runs; `--followup` injects into the open conversation, new topics navigate within the same tab |
 | **DEEP mode** | Activates Deep Research / Research mode on each platform (where available) |
 | **Prompt echo filtering** | Automatically strips platform echoes from extracted responses |
 | **Report viewer** | `preview.html?report=<path>` renders any Markdown report with charts |
@@ -285,6 +287,13 @@ python3 skills/orchestrator/engine/orchestrator.py \
   --mode DEEP \
   --task-name deep-research-20260316
 
+# Follow-up on the same topic (reuses open conversations, no new tabs):
+python3 skills/orchestrator/engine/orchestrator.py \
+  --prompt "Now focus specifically on pricing models" \
+  --mode REGULAR \
+  --task-name my-research \
+  --followup
+
 # Collate archived responses into a single file:
 python3 skills/orchestrator/engine/collate_responses.py \
   --archive-dir reports/my-research/
@@ -296,14 +305,13 @@ Output is written to `reports/{task-name}/` — one `.md` file per platform, plu
 
 ## Rate Limiting
 
-Each platform has a per-session budget, a post-use cooldown, and a daily cap:
+The engine tracks per-platform usage across runs and warns when a budget is low, but **never skips a platform based on budget alone**. A platform is only excluded from a round if:
 
-| Tier | Budget | Cooldown | Daily Cap |
-|---|---|---|---|
-| `free` | 3 requests | 30 min | 5 |
-| `pro` | 10 requests | 5 min | 20 |
+- A sign-in / login page is detected (`needs_login` status — 🔑)
+- The platform is unreachable (network error)
+- Actual quota exhaustion is detected on-page
 
-State is persisted in `.rate-limit-state.json` (gitignored) so limits carry across sessions. The engine prints remaining budget before each run and skips platforms in cooldown.
+Budgets, cooldowns, and daily caps are configured per-platform and per-tier in `config.py` and are persisted in `~/.chrome-playwright/rate-limit-state.json` across sessions.
 
 ---
 
@@ -360,7 +368,7 @@ Both skills propose additions and ask for approval before writing. Additions are
 ## Running Tests
 
 ```bash
-# Full test suite (using the project venv):
+# Full test suite — 98 tests (using the project venv):
 skills/orchestrator/engine/.venv/bin/python -m pytest tests/ -v
 
 # Alternatively, from the engine directory:
