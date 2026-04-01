@@ -6,6 +6,68 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040105 Alpha — `/comparator` Redesigned as Standalone Skill
+
+**Date:** 2026-04-02
+
+### Feature: `/comparator` exposed as a user-facing skill
+
+`/comparator` is now a first-class skill that can compare any two (or more) solutions
+with no prior MultAI research run required. Seven design gaps were addressed:
+
+- **Capability discovery (Gap 1):** New Phase 2 derives a capability framework (categories
+  and features) from whatever evidence is available — CIRs, working-folder documents, or
+  LLM knowledge. Framework is confirmed with the user before scoring begins.
+- **Auto build.json (Gap 2):** `build.json` is now auto-constructed from available evidence
+  in Phase 5. Users never interact with the JSON schema.
+- **Priority assignment phase (Gap 3):** New optional Phase 3 — interactive priority review
+  (say `auto` to skip). Explains weights (Critical=5×, High=3×, Medium=2×, Low=1×) before
+  asking. Allows per-feature or per-category adjustment.
+- **CIR optional (Gap 4):** Phase 4 (formerly "Process CIR") generalised to handle CIR
+  Variant A/B, non-CIR documents, and LLM knowledge — each tagged with a confidence level
+  (`CIR-confirmed`, `doc-confirmed`, `inferred`, `user-confirmed`).
+- **Compare from scratch (Gap 5):** `compare X vs Y` is now a first-class operation with
+  its own end-to-end path through Phases 2→7.
+- **Markdown summary (Gap 6):** Phase 7 always produces a readable summary: ranked weighted
+  scores, per-category breakdown, key differentiators, shared capabilities, gaps, and
+  evidence quality table.
+- **Domain knowledge optional (Gap 7):** Phase 1 proceeds gracefully without a domain file.
+  Phase 8 bootstraps it from scratch on the first run.
+
+---
+
+## 0.2.26040104 Alpha — Cowork Runtime Support (Claude-in-Chrome)
+
+**Date:** 2026-04-02
+
+### Feature: MultAI now runs in the Cowork tab
+
+The Playwright engine cannot run inside the Cowork Ubuntu sandbox (no system Chrome, no
+CDP access, no macOS Keychain auth). This release adds a full Cowork execution path via
+the Claude-in-Chrome MCP, which operates the user's real signed-in Mac Chrome directly.
+
+- **Runtime detection (Phase 0a):** Auto-detects Code tab vs Cowork at startup via a
+  3-tier check: `sys.platform`, `shutil.which("google-chrome")`, CDP port 9222. No user
+  configuration needed.
+- **Cowork path (Phase 2-Cowork):** Sequential Claude-in-Chrome execution — tab navigation,
+  JS prompt injection (contenteditable and textarea variants), response polling, and
+  login-signal detection per platform.
+- **User messaging:** Clear guidance when Claude-in-Chrome is not connected, with Code tab
+  as the recommended fallback.
+- **`chrome_selectors.py`:** New file — canonical CSS selectors for all 7 platforms (input,
+  submit, login signals, URL) for the Claude-in-Chrome path.
+- **Playwright engine unchanged** — remains the primary, full-featured Code tab path with
+  parallel execution.
+
+| | Code tab | Cowork tab |
+|---|---|---|
+| Engine | Playwright + CDP | Claude-in-Chrome MCP |
+| Execution | Parallel (all 7 at once) | Sequential (one at a time) |
+| Auth | Mac Chrome profile | Real Chrome (already signed in) |
+| Setup | `bash setup.sh` | Zero |
+
+---
+
 ## 0.2.26040102 Alpha — SENTINEL Security Audit Remediations
 
 **Date:** 2026-04-01
