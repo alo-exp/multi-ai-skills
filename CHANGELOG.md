@@ -6,6 +6,37 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040201 Alpha — `/consolidator` Redesigned as Standalone Skill
+
+**Date:** 2026-04-02
+
+### Feature: `/consolidator` exposed as a user-facing skill
+
+`/consolidator` is now a first-class skill that can synthesize content from any set of
+input sources — documents, transcripts, meeting notes, URLs, pasted text, or AI platform
+responses — into a unified, structured report. No prior MultAI research run required.
+
+- **Renamed:** skill name changed from `multi-ai-consolidator` → `consolidator` (fixes
+  display name in Claude Desktop skills list)
+- **Generic mode (new):** when invoked directly by the user with arbitrary sources, detects
+  content type (research papers, interview transcripts, meeting notes, feedback, etc.) and
+  auto-derives an appropriate report structure; announces structure and confirms before writing
+- **AI-Responses mode (preserved):** when invoked with a raw AI responses archive (from
+  orchestrator, landscape-researcher, or solution-researcher), produces a CIR with platform
+  reliability weighting exactly as before — no behavioral change for the MultAI workflow
+- **Mode detection (Phase 0):** automatically identifies which mode applies based on input
+  signals; announces mode to user before proceeding
+- **Consolidation guide authority preserved:** when a guide is provided (either mode), it
+  remains the sole structural authority — unchanged from prior behavior
+- **Source attribution:** all synthesized claims are attributed to specific sources by name;
+  conflicts between sources are surfaced explicitly rather than silently resolved
+- **Phase numbering updated:** 5 → 7 phases (Phase 0 mode detection, Phase 3 structure
+  determination, Phase 7 self-improve)
+- **README updated:** `/consolidator` documented as a user-facing skill alongside `/multai`
+  and `/comparator`
+
+---
+
 ## 0.2.26040105 Alpha — `/comparator` Redesigned as Standalone Skill
 
 **Date:** 2026-04-02

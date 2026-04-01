@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "multai"
-version = "0.2.26040105"
+version = "0.2.26040201"
 description = "MultAI — submit prompts to 7 AI platforms simultaneously, manage rate limits, operate XLSX comparison matrices, and synthesize results. Packaged as a Claude Cowork/Code plugin."
 readme = "USER-GUIDE.md"
 license = { text = "MIT" }

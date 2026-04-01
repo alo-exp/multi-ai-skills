@@ -110,7 +110,14 @@ export ANTHROPIC_API_KEY="..."   # from console.anthropic.com — enables Claude
 /comparator Compare these two products and give me a weighted score
 ```
 
-Both skills announce their plan before acting — you can always override or adjust.
+**`/consolidator`** — merge any set of content sources into a unified, structured report:
+```
+/consolidator Consolidate these three research papers into a summary report
+/consolidator Summarize these five customer interview transcripts into themes
+/consolidator Combine these meeting notes from four teams into a single overview
+```
+
+All skills announce their plan before acting — you can always override or adjust.
 
 ---
 
@@ -147,6 +154,18 @@ Standalone skill for comparing any two (or more) solutions. Derives a capability
 
 Can also be triggered via `/multai` — it routes automatically when comparison intent is detected.
 
+### Multi-source consolidation — `/consolidator`
+
+> "Consolidate these three research papers into a summary"
+> "Summarize these five customer interviews into themes and recommendations"
+> "Combine these meeting notes from four teams into one overview"
+
+Standalone skill for synthesizing content from any set of sources — documents, transcripts, notes, URLs, pasted text, or AI platform responses — into a unified, well-structured report. Detects the content type and auto-derives an appropriate report structure (research synthesis, theme extraction, decision log, etc.), or follows a consolidation guide you provide.
+
+When invoked from within a `/multai` workflow, operates in AI-Responses mode and produces a CIR (Consolidated Intelligence Report) from raw platform outputs.
+
+**Output:** `[Topic] - Consolidated Report.md` (generic) or `[Topic] - Consolidated Intelligence Report.md` (AI-Responses mode)
+
 ### Comparison matrix operations
 
 > "Add Harness to the comparison matrix"
@@ -182,7 +201,7 @@ multai/
 │   │       ├── agent_fallback.py
 │   │       ├── collate_responses.py
 │   │       └── platforms/    ← claude_ai.py chatgpt.py copilot.py …
-│   ├── consolidator/         ← Response synthesis (internal)
+│   ├── consolidator/         ← /consolidator skill — multi-source synthesis + CIR
 │   ├── landscape-researcher/ ← Market landscape workflow (internal)
 │   ├── solution-researcher/  ← Product deep-dive workflow (internal)
 │   └── comparator/           ← /comparator skill — head-to-head comparisons + XLSX matrix
