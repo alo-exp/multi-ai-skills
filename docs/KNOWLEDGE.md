@@ -10,10 +10,10 @@
 
 | Doc | Path | Status |
 |-----|------|--------|
-| Master PRD | `docs/Master-PRD.md` | draft |
-| Architecture | `docs/Architecture-and-Design.md` | draft |
-| Testing Strategy | `docs/Testing-Strategy-and-Plan.md` | draft |
-| CI/CD | `docs/CICD.md` | draft |
+| SRS | `docs/SRS.md` | active |
+| Architecture | `docs/Architecture-and-Design.md` | active |
+| Testing Strategy | `docs/Test-Strategy-and-Plan.md` | active |
+| CI/CD | `docs/CICD-Strategy-and-Plan.md` | active |
 | Active Workflow | `docs/workflows/full-dev-cycle.md` | active |
 | Specs | `docs/specs/` | 0 specs |
 | Task Log | `docs/CHANGELOG.md` | — |
