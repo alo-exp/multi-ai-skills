@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "project": {
+    "name": "multai",
+    "src_pattern": "/scripts/",
+    "src_exclude_pattern": "__tests__|\\.test\\.",
+    "active_workflow": "full-dev-cycle"
+  },
+  "skills": {
+    "required_planning": [
+      "quality-gates"
+    ],
+    "required_deploy": [
+      "code-review", "requesting-code-review", "receiving-code-review",
+      "testing-strategy", "documentation",
+      "finishing-a-development-branch", "deploy-checklist",
+      "release-notes"
+    ],
+    "all_tracked": [
+      "quality-gates", "blast-radius", "devops-quality-gates", "devops-skill-router",
+      "design-system", "ux-copy",
+      "architecture", "system-design",
+      "code-review", "requesting-code-review", "receiving-code-review",
+      "testing-strategy", "documentation",
+      "finishing-a-development-branch", "deploy-checklist",
+      "release-notes"
+    ]
+  },
+  "devops_plugins": {
+    "hashicorp": false,
+    "awslabs": false,
+    "pulumi": false,
+    "devops-skills": false,
+    "wshobson": false
+  },
+  "verify_commands": ["pytest"],
+  "state": {
+    "state_file": "/tmp/.silver-bullet-state",
+    "trivial_file": "/tmp/.silver-bullet-trivial"
+  }
+}
