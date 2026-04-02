@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import importlib.metadata
 import importlib.util
 import json
 import logging
@@ -106,7 +107,7 @@ def _verify_playwright(python_exe: str) -> None:
     venv_dir = Path(python_exe).parent.parent  # .../engine/.venv/
     stamp_file = venv_dir / ".playwright-verified"
     try:
-        pw_version = importlib.util.find_spec("playwright") and __import__("importlib.metadata").metadata.version("playwright")
+        pw_version = importlib.metadata.version("playwright")
     except Exception:
         pw_version = None
     if pw_version and stamp_file.exists():

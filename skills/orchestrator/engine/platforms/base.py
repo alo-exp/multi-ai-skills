@@ -7,6 +7,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from weakref import WeakSet
 
 from playwright.async_api import Page
 
@@ -58,6 +59,7 @@ class BasePlatform:
     name: str = ""                 # e.g. "perplexity"
     url: str = ""                  # e.g. "https://www.perplexity.ai"
     display_name: str = ""         # e.g. "Perplexity"
+    _dialog_registered_pages: WeakSet = WeakSet()  # Track pages with dialog handlers
 
     def __init__(self):
         self.url = PLATFORM_URLS.get(self.name, "")
@@ -485,13 +487,14 @@ class BasePlatform:
         fires and no handler is attached. This handler accepts all dialogs immediately so
         that overlays created by alert() / confirm() never block automation.
 
-        Safe for follow-up mode: uses a page attribute flag to skip re-registration
-        when the same Page object is reused across multiple run() calls.
+        Safe for follow-up mode: uses a class-level WeakSet to track pages that
+        already have handlers, avoiding duplicate registration when the same Page
+        object is reused across multiple run() calls.
         """
         # Guard: don't register duplicate handlers on the same page (follow-up mode)
-        if getattr(page, "_multai_dialog_handler", False):
+        if page in BasePlatform._dialog_registered_pages:
             return
-        page._multai_dialog_handler = True
+        BasePlatform._dialog_registered_pages.add(page)
 
         async def _accept_dialog(dialog) -> None:
             try:
@@ -518,10 +521,14 @@ class BasePlatform:
         # so they won't accidentally click a chat UI button.
         scoped_selectors = [
             # Buttons inside modal / dialog / overlay containers
-            '[role="dialog"] button[aria-label*="lose"]',
-            '[role="dialog"] button[aria-label*="ismiss"]',
-            '[aria-modal="true"] button[aria-label*="lose"]',
-            '[aria-modal="true"] button[aria-label*="ismiss"]',
+            '[role="dialog"] button[aria-label*="Close"]',
+            '[role="dialog"] button[aria-label*="close"]',
+            '[role="dialog"] button[aria-label*="Dismiss"]',
+            '[role="dialog"] button[aria-label*="dismiss"]',
+            '[aria-modal="true"] button[aria-label*="Close"]',
+            '[aria-modal="true"] button[aria-label*="close"]',
+            '[aria-modal="true"] button[aria-label*="Dismiss"]',
+            '[aria-modal="true"] button[aria-label*="dismiss"]',
             '[data-testid="close-button"]',
             '[data-testid="modal-close"]',
             '[class*="modal"] [class*="close"]',
@@ -590,6 +597,7 @@ class BasePlatform:
             error_title_patterns = [
                 "404", "not found", "page not found",
                 "500", "internal server error",
+                "502", "bad gateway",
                 "503", "service unavailable",
                 "access denied", "forbidden",
             ]
