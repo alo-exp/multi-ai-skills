@@ -347,7 +347,7 @@ a.sec-color-7 { border-left: 3px solid #ec4899; padding-left: 6px; }
   display: flex; align-items: center; gap: 10px;
 }
 .export-btn {
-  color: #0f172a; border: none; padding: 10px 20px; border-radius: var(--radius-pill);
+  color: #0f172a; border: 1px solid var(--color-border); padding: 10px 20px; border-radius: var(--radius-pill);
   font-size: 13px; font-weight: 600; cursor: pointer;
   background: #ffffff; box-shadow: none;
   display: flex; align-items: center; justify-content: center; gap: 6px; line-height: 1;
@@ -369,7 +369,7 @@ a.sec-color-7 { border-left: 3px solid #ec4899; padding-left: 6px; }
 /* ── Vendor Comparison Drawer ── */
 #compareBtn { background: #ffffff; color: #0f172a;
               padding: 10px 20px; border-radius: var(--radius-pill);
-              cursor: pointer; font-size: 13px; font-weight: 600; border: none;
+              cursor: pointer; font-size: 13px; font-weight: 600; border: 1px solid var(--color-border);
               box-shadow: none;
               transition: background 0.2s ease;
               display: flex; align-items: center; gap: 6px; white-space: nowrap;
@@ -1388,9 +1388,18 @@ function buildTOC() {
     loadFile(decodeURIComponent(report));
   } else {
     document.getElementById('content').innerHTML =
-      '<p style="color:var(--color-text-muted);padding:60px 24px;font-size:15px;">' +
-      'No report loaded. Run <code>python3 skills/landscape-researcher/launch_report.py ' +
-      '--report-dir &lt;dir&gt; --report-file &lt;file&gt;</code> to open a report.</p>';
+      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+      'min-height:60vh;padding:48px 24px;text-align:center;">' +
+      '<div style="font-size:48px;margin-bottom:20px;">📊</div>' +
+      '<h2 style="font-size:22px;font-weight:700;color:var(--color-text-primary);margin:0 0 10px;">No report loaded</h2>' +
+      '<p style="font-size:14px;color:var(--color-text-muted);max-width:480px;margin:0 0 28px;line-height:1.6;">' +
+      'Run the landscape researcher skill to generate a report, then open it with:</p>' +
+      '<pre style="background:var(--color-surface-alt,#f8fafc);border:1px solid var(--color-border);' +
+      'border-radius:8px;padding:14px 20px;font-size:12px;color:var(--color-text-primary);' +
+      'text-align:left;max-width:600px;width:100%;overflow-x:auto;margin:0;">' +
+      'python3 skills/landscape-researcher/launch_report.py \\\n' +
+      '  --report-dir &lt;dir&gt; --report-file &lt;file&gt;</pre>' +
+      '</div>';
   }
 })();
 
