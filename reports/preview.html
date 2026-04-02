@@ -349,7 +349,7 @@ a.sec-color-7 { border-left: 3px solid #ec4899; padding-left: 6px; }
   color: #fff; border: none; padding: 10px 20px; border-radius: var(--radius-pill);
   font-size: 13px; font-weight: 600; cursor: pointer;
   background: var(--gradient-brand); box-shadow: var(--shadow-btn);
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; justify-content: center; gap: 6px; line-height: 1;
   transition: box-shadow 0.2s ease, transform 0.2s ease; white-space: nowrap;
   font-family: 'Inter', system-ui, sans-serif;
 }
@@ -424,7 +424,6 @@ a.sec-color-7 { border-left: 3px solid #ec4899; padding-left: 6px; }
 <body>
 
 <div id="solutionNav">
-  <div class="snav-row" id="snavDocs"><span class="snav-label">DOCS</span><button class="snav-btn snav-doc-btn" onclick="loadFile('USER-GUIDE.md')">📖 User Guide</button><button class="snav-btn snav-doc-btn" onclick="loadFile('CONTRIBUTOR-GUIDE.md')">🔧 Contributor Guide</button></div>
   <div class="snav-row" id="snavCommercial"><span class="snav-label">COMMERCIAL</span></div>
   <div class="snav-row" id="snavOSS"><span class="snav-label">OSS</span></div>
 </div>
@@ -436,10 +435,7 @@ a.sec-color-7 { border-left: 3px solid #ec4899; padding-left: 6px; }
   <h3>Contents</h3>
   <ul id="toc"></ul>
   <div id="stats"></div>
-  <div id="sidebarFooter">
-    <a href="#" onclick="loadFile('USER-GUIDE.md');return false;">📖 User Guide</a>
-    <a href="#" onclick="loadFile('CONTRIBUTOR-GUIDE.md');return false;">🔧 Contributor Guide</a>
-  </div>
+  <div id="sidebarFooter"></div>
 </div>
 
 <div id="main">
@@ -1282,10 +1278,12 @@ async function loadFile(path) {
     document.getElementById('stats').textContent =
       `${(md.length/1000).toFixed(1)}K chars · ${md.split('\n').length} lines`;
     window.scrollTo(0, 0);
-    // Show/hide vendor nav rows based on content type (hide for docs)
+    // Show/hide vendor nav rows based on content type
     const isReport = path.includes('Report') || path.includes('report');
-    document.getElementById('snavCommercial').style.display = isReport ? 'flex' : 'none';
-    document.getElementById('snavOSS').style.display = isReport ? 'flex' : 'none';
+    const commRow = document.getElementById('snavCommercial');
+    const ossRow  = document.getElementById('snavOSS');
+    if (commRow) commRow.style.display = isReport ? 'flex' : 'none';
+    if (ossRow)  ossRow.style.display  = isReport ? 'flex' : 'none';
     // Inject charts (consolidated report only), then linkify all files
     if (path.includes('Consolidated Intelligence Report') || path.includes('Market Landscape Report')) {
       setTimeout(() => {
