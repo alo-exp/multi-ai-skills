@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # MultAI — one-time bootstrap for the Playwright/Browser-Use engine
 # Run from the repo root: bash setup.sh
-# Optional: bash setup.sh --with-fallback   (also installs browser-use agent)
+# Optional: bash setup.sh --no-fallback   (skip browser-use agent installation)
 
 set -euo pipefail
 
@@ -15,9 +15,11 @@ fi
 
 ENGINE_DIR="$SCRIPT_DIR/skills/orchestrator/engine"
 VENV_DIR="$ENGINE_DIR/.venv"
-WITH_FALLBACK=false
+WITH_FALLBACK=true   # browser-use is installed by default; use --no-fallback to skip
 
 for arg in "$@"; do
+  [[ "$arg" == "--no-fallback" ]] && WITH_FALLBACK=false
+  # Legacy flag kept for backwards compatibility
   [[ "$arg" == "--with-fallback" ]] && WITH_FALLBACK=true
 done
 
@@ -109,7 +111,7 @@ fi
 
 # ── Optional: browser-use fallback ───────────────────────────────────────────
 if [[ "$WITH_FALLBACK" == true ]]; then
-  info "Installing browser-use agent fallback (--with-fallback)..."
+  info "Installing browser-use agent fallback..."
   "$PIP" install --quiet "browser-use==0.12.2" "anthropic==0.76.0" "fastmcp==2.0.0"
   success "browser-use fallback installed"
 
@@ -121,7 +123,7 @@ if [[ "$WITH_FALLBACK" == true ]]; then
     warn "browser-use import failed — run: $PIP install browser-use==0.12.2"
   fi
 else
-  warn "Skipping browser-use fallback (add --with-fallback to enable it)"
+  info "Skipping browser-use fallback (--no-fallback was passed)"
 fi
 
 # ── Engine smoke test ─────────────────────────────────────────────────────────

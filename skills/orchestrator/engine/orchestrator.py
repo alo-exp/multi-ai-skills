@@ -217,25 +217,25 @@ def _ensure_dependencies() -> None:
     # Verify playwright import and Chromium availability
     _verify_playwright(sys.executable)
 
-    # 2. Optional: browser-use (only when ANTHROPIC_API_KEY or GOOGLE_API_KEY is set)
-    if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("GOOGLE_API_KEY"):
-        optional = []
-        if importlib.util.find_spec("browser_use") is None:
-            optional.append("browser-use==0.12.2")
-        if optional:
-            print(f"  Installing Agent fallback packages: {', '.join(optional)}")
-            try:
-                subprocess.check_call(
-                    [sys.executable, "-m", "pip", "install", "--quiet"] + optional,
-                )
-            except subprocess.CalledProcessError:
-                print(f"  WARNING: Failed to install optional packages: {', '.join(optional)}")
-                print("  Agent fallback will be disabled. To install manually:")
-                print(f"    pip install {' '.join(optional)}")
-                # Don't exit — these are optional
-            else:
-                installed = True
-                _verify_browser_use(sys.executable)
+    # 2. Optional: browser-use (install whenever Python supports it; API key
+    #    absence only disables the runtime manager, not the package itself)
+    optional = []
+    if importlib.util.find_spec("browser_use") is None:
+        optional.append("browser-use==0.12.2")
+    if optional:
+        print(f"  Installing Agent fallback packages: {', '.join(optional)}")
+        try:
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", "--quiet"] + optional,
+            )
+        except subprocess.CalledProcessError:
+            print(f"  WARNING: Failed to install optional packages: {', '.join(optional)}")
+            print("  Agent fallback will be disabled. To install manually:")
+            print(f"    pip install {' '.join(optional)}")
+            # Don't exit — these are optional
+        else:
+            installed = True
+            _verify_browser_use(sys.executable)
 
     if installed:
         print("  All dependencies ready.\n")
