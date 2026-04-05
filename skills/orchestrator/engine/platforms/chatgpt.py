@@ -49,6 +49,7 @@ class ChatGPT(BasePlatform):
     def __init__(self):
         super().__init__()
         self._no_stop_polls: int = 0  # Consecutive polls with no stop button visible
+        self._seen_stop: bool = False  # True once a stop/progress button was visible
         self._mode: str = ""          # Stored in configure_mode; used by extract_response
 
     async def check_rate_limit(self, page: Page) -> str | None:
@@ -286,19 +287,29 @@ class ChatGPT(BasePlatform):
         polls (~30s), the response is done.  For large responses (> 2000 chars
         in article, or > 15000 chars body text), complete immediately.
 
+        DEEP mode exception: body_len threshold is raised to 50000 because
+        the echoed user prompt alone can push body text well past 15000 chars
+        before the actual research is done.  Also tracks _seen_stop so that
+        stable-state detection does not fire prematurely before research starts.
+
         This handles both:
         - Real Deep Research reports (large content → instant detect)
         - Quota/error messages (short content → stable-state detect after 30s)
         - Mid-streaming (stop button visible → counter resets)
         """
-        # 1. Check for stop/cancel button (still generating)
+        # 1. Check for stop/cancel/progress button (still generating)
         has_stop = False
-        for sel in [
+        stop_selectors = [
             'button:has-text("Stop")',
             'button:has-text("Cancel")',
             'button[aria-label*="Stop"]',
             'button[aria-label*="stop"]',
-        ]:
+            # DR-specific progress indicators
+            'button:has-text("Stop researching")',
+            'button[aria-label*="Stop researching"]',
+            '[class*="deep-research"] button:has-text("Stop")',
+        ]
+        for sel in stop_selectors:
             try:
                 stop = page.locator(sel).first
                 if await stop.count() > 0 and await stop.is_visible():
@@ -307,38 +318,66 @@ class ChatGPT(BasePlatform):
             except Exception:
                 pass
 
+        # Also check for DR progress text (research is running but stop button may be hidden)
+        if not has_stop and self._mode == "DEEP":
+            try:
+                for prog_text in ["Searching the web", "Reading", "Analyzing", "Researching"]:
+                    prog = page.get_by_text(prog_text, exact=False).first
+                    if await prog.count() > 0 and await prog.is_visible():
+                        has_stop = True
+                        break
+            except Exception:
+                pass
+
         if has_stop:
             self._no_stop_polls = 0
+            self._seen_stop = True
             return False
 
         # No stop button — increment stable-state counter
         self._no_stop_polls += 1
 
         # 2. Response article with substantial content → immediate complete
-        try:
-            articles = page.locator("article")
-            count = await articles.count()
-            if count >= 2:
-                resp_len = await articles.nth(count - 1).evaluate("el => el.innerText.length")
-                if resp_len > 2000:
-                    return True
-        except Exception:
-            pass
+        # (skip in DEEP mode — DR lives in an iframe, not an article element)
+        if self._mode != "DEEP":
+            try:
+                articles = page.locator("article")
+                count = await articles.count()
+                if count >= 2:
+                    resp_len = await articles.nth(count - 1).evaluate("el => el.innerText.length")
+                    if resp_len > 2000:
+                        return True
+            except Exception:
+                pass
 
-        # 3. Body text > 15000 chars → immediate complete (page chrome ≈ 7-8k)
+        # 3. Body text threshold → immediate complete.
+        # DEEP mode: use a much higher threshold (50000) because the echoed prompt
+        # (~5000+ chars) + research UI can push the page well past 15000 before done.
+        # Regular mode: 15000 chars is enough (page chrome ≈ 7-8k).
         try:
             body_len = await page.evaluate("document.body.innerText.length")
-            if body_len > 15000:
+            threshold = 50000 if self._mode == "DEEP" else 15000
+            if body_len > threshold:
+                log.info(f"[ChatGPT] Body text {body_len} > {threshold} — declaring complete")
                 return True
         except Exception:
             pass
 
-        # 4. Stable-state detection: no stop button for 3 consecutive polls
-        # (~30s with POLL_INTERVAL=10). Handles short responses, quota
-        # messages, and error pages that don't meet content thresholds.
-        if self._no_stop_polls >= 3:
-            log.info("[ChatGPT] No stop button for 3 polls — declaring complete")
-            return True
+        # 4. Stable-state detection: no stop button for N consecutive polls.
+        # DEEP mode: require _seen_stop (research started) AND 12 polls (~120s).
+        # Regular mode: 3 polls (~30s) regardless.
+        if self._mode == "DEEP":
+            if self._no_stop_polls >= 12 and self._seen_stop:
+                log.info("[ChatGPT] DEEP: No stop for 12 polls after research started — declaring complete")
+                return True
+            # Extended fallback: if stop was never seen after 20 polls (~200s), give up
+            if self._no_stop_polls >= 20:
+                log.warning("[ChatGPT] DEEP: 20 polls with no stop ever seen — declaring complete")
+                return True
+        else:
+            if self._no_stop_polls >= 3:
+                log.info("[ChatGPT] No stop button for 3 polls — declaring complete")
+                return True
 
         return False
 

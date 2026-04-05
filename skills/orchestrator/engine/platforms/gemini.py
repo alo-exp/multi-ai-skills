@@ -280,9 +280,13 @@ class Gemini(BasePlatform):
         # 3. Content-based: body text > 15 000 chars.
         #    Threshold raised from 10 000 (Harness OSS: plan-phase page chrome was ~3-4 k;
         #    research-complete reports are 15 000+).
+        #    GUARD: require _seen_stop so this does not fire while the plan/prompt echo
+        #    is still on screen (the echoed prompt + Thinking text can easily exceed 15 k
+        #    before actual research begins).
         try:
             body_len = await page.evaluate("document.body.innerText.length")
-            if body_len > 15000:
+            if body_len > 15000 and self._seen_stop:
+                log.info(f"[Gemini] Body text {body_len} > 15000 after research started — declaring complete")
                 return True
         except Exception:
             pass

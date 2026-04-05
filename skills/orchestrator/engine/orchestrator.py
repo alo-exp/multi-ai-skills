@@ -721,6 +721,18 @@ async def orchestrate(args: argparse.Namespace, effective_output_dir: str) -> li
                 )
                 context = browser.contexts[0]
                 log.info(f"Connected to existing Chrome via CDP (port {CDP_PORT}) — logins preserved")
+                # On macOS: minimize Chrome so tab switching doesn't steal focus
+                if sys.platform == "darwin" and not args.headless:
+                    try:
+                        subprocess.Popen(
+                            ["osascript", "-e",
+                             'tell application "Google Chrome" to set miniaturized of every window to true'],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
+                        log.info("[Chrome] Minimized Chrome window to prevent focus stealing")
+                    except Exception:
+                        pass
             except Exception as exc:
                 log.info(f"No running Chrome on port {CDP_PORT} ({type(exc).__name__}), will launch new")
                 browser = None
@@ -774,6 +786,20 @@ async def orchestrate(args: argparse.Namespace, effective_output_dir: str) -> li
             )
             context = browser.contexts[0]
             log.info(f"Launched Chrome (pid {chrome_proc.pid}) and connected via CDP")
+
+            # On macOS: minimize Chrome immediately so it doesn't steal focus
+            # Playwright interacts via CDP and doesn't need the window in front.
+            if sys.platform == "darwin" and not args.headless:
+                try:
+                    subprocess.Popen(
+                        ["osascript", "-e",
+                         'tell application "Google Chrome" to set miniaturized of every window to true'],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    log.info("[Chrome] Minimized Chrome window to prevent focus stealing")
+                except Exception as exc:
+                    log.debug(f"[Chrome] Could not minimize window: {exc}")
 
         # Create Agent fallback manager (uses CDP to share the Chrome instance)
         agent_mgr = AgentFallbackManager(

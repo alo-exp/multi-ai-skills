@@ -6,6 +6,37 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040604 Alpha — DEEP Mode Early Completion Fix, Perplexity Old-Content Fix, Chrome Focus Steal Fix
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **ChatGPT DEEP mode premature completion**: `chatgpt.py` `completion_check` now tracks `_seen_stop`
+  so stable-state detection requires research to have actually started. In DEEP mode, body-text
+  threshold raised 15k → 50k (echoed prompt alone exceeded 15k), article check skipped (DR lives
+  in iframe), stable-state extended from 3 → 12 polls after stop seen / 20 polls overall. Also
+  detects "Stop researching", "Searching the web", "Reading", "Analyzing", "Researching" as
+  in-progress signals.
+
+- **Gemini DEEP mode premature completion via body text**: `gemini.py` `completion_check` body-text
+  `> 15000` guard now requires `_seen_stop` (research started). Previously, the echoed prompt +
+  Thinking phase text triggered this check during the plan phase (before "Start research" is
+  clicked), causing extraction of plan/echo content instead of the completed research report.
+
+- **Perplexity old-content extraction**: `perplexity.py` `extract_response` now uses the **last**
+  `.prose` element instead of `.first` so old conversation content from a reused tab is not
+  returned when the new response is appended after it. Also, the "sources + prose > 3000"
+  completion check in `completion_check` now requires `is_on_conversation` (URL must contain
+  `/search` or `/p/`) to prevent premature completion on a reused tab that already has sources
+  and prose loaded from a prior session.
+
+- **Chrome focus stealing**: `orchestrator.py` now minimizes Chrome windows via AppleScript
+  (`set miniaturized of every window to true`) immediately after both fresh launches and CDP
+  reuse on macOS. Playwright interacts via CDP and does not need Chrome in the foreground.
+
+---
+
 ## 0.2.26040603 Alpha — ChatGPT Echo Detection Fix, Gemini Cancel Button, Perplexity Stable-State Guard
 
 **Date:** 2026-04-06

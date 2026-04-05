@@ -239,13 +239,22 @@ class Perplexity(BasePlatform):
         except Exception:
             pass
 
+        # Need current URL for checks 3 and 4 — compute once here
+        current_url = page.url
+        is_on_conversation = (
+            "perplexity.ai/search" in current_url
+            or "perplexity.ai/p/" in current_url
+        )
+
         # 3. Check for "Sources" section + substantial prose content
         # Citations can appear while Perplexity is still generating — require
-        # both citations AND substantial .prose content (> 3000 chars)
+        # both citations AND substantial .prose content (> 3000 chars).
+        # ALSO require is_on_conversation to avoid firing on a reused tab
+        # that has old conversation content loaded (citations + prose already > 3000).
         try:
             sources = page.locator('[class*="source"], [class*="citation"]')
             source_count = await sources.count()
-            if source_count >= 2:
+            if source_count >= 2 and is_on_conversation:
                 prose_len = 0
                 try:
                     prose = page.locator('.prose, [class*="prose"]').first
@@ -266,11 +275,6 @@ class Perplexity(BasePlatform):
         #    content (from a reused tab) does not trigger premature completion.
         #    Also verify the page URL is NOT the plain homepage — if we're still on
         #    the root URL the query may not have been submitted yet.
-        current_url = page.url
-        is_on_conversation = (
-            "perplexity.ai/search" in current_url
-            or "perplexity.ai/p/" in current_url
-        )
         if self._no_stop_polls >= 6 and self._last_page_len > 10000 and is_on_conversation:
             log.info(f"[Perplexity] Page text stable at {self._last_page_len} chars for 6 polls on conversation page — declaring complete")
             return True
@@ -284,24 +288,29 @@ class Perplexity(BasePlatform):
 
     async def extract_response(self, page: Page) -> str:
         """Extract from .prose container or full page text."""
-        # Primary: .prose selector
+        # Primary: .prose selector — use the LAST element (most recent response),
+        # not the first, to avoid returning old conversation content from a reused tab.
         try:
-            prose = page.locator('.prose').first
-            if await prose.count() > 0:
+            prose_els = page.locator('.prose')
+            count = await prose_els.count()
+            if count > 0:
+                prose = prose_els.nth(count - 1)  # last = most recent
                 text = await prose.inner_text()
                 if len(text) > 500:
-                    log.info(f"[Perplexity] Extracted {len(text)} chars via .prose")
+                    log.info(f"[Perplexity] Extracted {len(text)} chars via .prose (last of {count})")
                     return text
         except Exception as exc:
             log.warning(f"[Perplexity] .prose extraction failed: {exc}")
 
-        # Fallback: try [class*="prose"]
+        # Fallback: try [class*="prose"] — also use last element
         try:
-            prose_alt = page.locator('[class*="prose"]').first
-            if await prose_alt.count() > 0:
+            prose_alt_els = page.locator('[class*="prose"]')
+            alt_count = await prose_alt_els.count()
+            if alt_count > 0:
+                prose_alt = prose_alt_els.nth(alt_count - 1)
                 text = await prose_alt.inner_text()
                 if len(text) > 500:
-                    log.info(f"[Perplexity] Extracted {len(text)} chars via [class*=prose]")
+                    log.info(f"[Perplexity] Extracted {len(text)} chars via [class*=prose] (last of {alt_count})")
                     return text
         except Exception:
             pass
