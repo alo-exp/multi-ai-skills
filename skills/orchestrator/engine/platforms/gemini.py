@@ -229,12 +229,15 @@ class Gemini(BasePlatform):
         if not has_stop:
             try:
                 # Gemini shows a "Thinking" label while Deep Research is in progress.
-                # Scope to the response/progress area to avoid false matches in
-                # other visible text.
+                # Primary: scoped selectors for known response/progress containers.
+                # Fallback: any div/span with exact text "Thinking" (avoids the model-
+                # selector toolbar button which is a <button> element).
                 thinking_el = page.locator(
                     '[class*="progress"] :text("Thinking"), '
                     '[class*="deep-research"] :text("Thinking"), '
-                    'model-response :text("Thinking")'
+                    'model-response :text("Thinking"), '
+                    'div:text-is("Thinking"), '
+                    'span:text-is("Thinking")'
                 ).first
                 if await thinking_el.count() > 0 and await thinking_el.is_visible():
                     has_stop = True
@@ -306,12 +309,14 @@ class Gemini(BasePlatform):
             return True
 
         # 5. Extended fallback: if still no stop/cancel/thinking signal seen after
-        #    40 polls (~6.7 min), something is wrong (post_send may have missed
-        #    "Start research", or the DR UI changed).  Declare complete.
-        #    Raised from 12 → 40 because Deep Research for complex prompts takes
-        #    5–30 min; the old 2-min limit was triggering prematurely.
-        if self._no_stop_polls >= 40:
-            log.warning("[Gemini] 40 polls with no stop/cancel/thinking ever seen — declaring complete.")
+        #    N polls, something is wrong (post_send may have missed "Start research",
+        #    or the DR UI changed).  Declare complete.
+        #    DR mode: 120 polls (~20 min) — Gemini DR for complex prompts can take
+        #    15-30 min; 40 polls was triggering prematurely before _seen_stop was set.
+        #    Non-DR mode: 40 polls (~6.7 min).
+        no_stop_limit = 120 if self._deep_mode else 40
+        if self._no_stop_polls >= no_stop_limit:
+            log.warning(f"[Gemini] {no_stop_limit} polls with no stop/cancel/thinking ever seen — declaring complete.")
             return True
 
         return False

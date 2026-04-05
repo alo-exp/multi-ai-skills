@@ -6,6 +6,29 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040608 Alpha — Gemini DR Thinking Detection, ChatGPT Conversation ID Filter
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **Gemini Deep Research completion fires at 400s (before report arrives)**: `gemini.py`
+  iter 5 showed Gemini in "Thinking" state at 433s but the 40-poll no-`_seen_stop` fallback
+  had already fired. Root cause: the scoped Thinking selectors (`[class*="progress"]`,
+  `[class*="deep-research"]`, `model-response`) didn't match Gemini's actual DOM, so
+  `_seen_stop` was never set. Fix: added `div:text-is("Thinking")` and
+  `span:text-is("Thinking")` fallback selectors (avoid `<button>` to exclude model-selector
+  toolbar). Also raised the no-`_seen_stop` fallback from 40 → 120 polls in DR mode (~20 min)
+  to give adequate runway for complex prompts.
+- **ChatGPT Deep Research extracting old stored DR documents**: `chatgpt.py` iter 5 again
+  returned "Consolidated Report: Claude Not Following CLAUDE.md Instructions" (a different old
+  DR document). Root cause: ChatGPT persists ALL previous DR documents and loads their iframes.
+  Fix: capture conversation ID from URL after prompt submit (waits up to 15s for `/c/CONV_ID`
+  pattern); filter `_extract_deep_research_panel` frames to only accept iframes whose URL
+  contains the current conversation ID.
+
+---
+
 ## 0.2.26040607 Alpha — ChatGPT DR Timeout Extension, Additional Cancel Selectors
 
 **Date:** 2026-04-06

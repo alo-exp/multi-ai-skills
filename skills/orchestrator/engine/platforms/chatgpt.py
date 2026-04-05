@@ -51,6 +51,7 @@ class ChatGPT(BasePlatform):
         self._no_stop_polls: int = 0  # Consecutive polls with no stop button visible
         self._seen_stop: bool = False  # True once a stop/progress button was visible
         self._mode: str = ""          # Stored in configure_mode; used by extract_response
+        self._conversation_id: str = ""  # Captured from page URL after prompt submit
 
     async def check_rate_limit(self, page: Page) -> str | None:
         """Check for ChatGPT-specific rate limit indicators.
@@ -166,6 +167,18 @@ class ChatGPT(BasePlatform):
             except Exception as exc:
                 log.warning(f"[ChatGPT] Blob interceptor installation failed: {exc}")
 
+        # Capture conversation ID from URL — ChatGPT navigates to /c/CONV_ID after submit.
+        # Wait up to 15s for the URL to change (new conversation URL).
+        for _ in range(15):
+            await page.wait_for_timeout(1000)
+            url = page.url
+            if "/c/" in url:
+                conv_id = url.split("/c/")[-1].split("?")[0].split("#")[0]
+                if conv_id:
+                    self._conversation_id = conv_id
+                    log.info(f"[ChatGPT] Captured conversation ID: {conv_id}")
+                    break
+
     async def _extract_deep_research_panel(self, page: Page) -> str:
         """
         Extract Deep Research content from the cross-origin iframe panel.
@@ -189,16 +202,26 @@ class ChatGPT(BasePlatform):
             # Iterate REVERSED so we get the MOST RECENTLY added DR iframe first.
             # ChatGPT keeps old DR panels in memory when navigating to a new chat,
             # so forward iteration would return stale content from a previous run.
+            #
+            # If we captured a conversation ID in post_send, ONLY accept frames
+            # whose URL contains that ID (current conversation's DR only).
+            # This prevents extracting DR documents from previous conversations.
+            conv_id = self._conversation_id  # "" if not captured
             for frame in reversed(page.frames):
-                if any(pat in frame.url for pat in _DR_PATTERNS):
-                    try:
-                        text = await frame.evaluate("document.body.innerText")
-                        if text and len(text) > 1000 and not is_prompt_echo(text, self.prompt_sigs):
-                            log.info(f"[ChatGPT] Extracted {len(text)} chars via frame.evaluate() (frame: {frame.url[:60]})")
-                            return text
-                        log.debug(f"[ChatGPT] frame.evaluate() gave {len(text) if text else 0} chars (frame: {frame.url[:60]}) — trying next method")
-                    except Exception as exc:
-                        log.debug(f"[ChatGPT] frame.evaluate() failed ({frame.url[:60]}): {exc}")
+                if not any(pat in frame.url for pat in _DR_PATTERNS):
+                    continue
+                # Skip frames from other conversations if we have a conv ID
+                if conv_id and conv_id not in frame.url:
+                    log.debug(f"[ChatGPT] Skipping DR frame not in current conv ({conv_id[:8]}...): {frame.url[:60]}")
+                    continue
+                try:
+                    text = await frame.evaluate("document.body.innerText")
+                    if text and len(text) > 1000 and not is_prompt_echo(text, self.prompt_sigs):
+                        log.info(f"[ChatGPT] Extracted {len(text)} chars via frame.evaluate() (frame: {frame.url[:60]})")
+                        return text
+                    log.debug(f"[ChatGPT] frame.evaluate() gave {len(text) if text else 0} chars (frame: {frame.url[:60]}) — trying next method")
+                except Exception as exc:
+                    log.debug(f"[ChatGPT] frame.evaluate() failed ({frame.url[:60]}): {exc}")
 
             # --- B: frame_locator selector-based button click + clipboard ---
             # Use "last" iframe matching the pattern (most recent DR for this conversation).
