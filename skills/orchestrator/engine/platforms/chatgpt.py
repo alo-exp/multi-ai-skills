@@ -194,22 +194,40 @@ class ChatGPT(BasePlatform):
         If all methods return < 1000 chars (new DR iframe not yet populated),
         waits 10s and retries once before giving up.
         """
-        _DR_PATTERNS = ["web-sandbox", "deep_research"]
+        # URL substrings known to appear in ChatGPT DR iframe src attributes.
+        # Kept broad to survive ChatGPT URL scheme changes.
+        _DR_PATTERNS = ["web-sandbox", "deep_research", "oaiusercontent.com", "blob:"]
 
         # Inner function: one extraction attempt across all three methods
         async def _try_extract() -> str:
             # --- A: Direct CDP frame text extraction (no clicks required) ---
             # Find the NEWEST DR iframe (last in page.frames list = most recently added).
-            # ChatGPT keeps old DR panels in memory; forward/fall-through iteration
-            # would return stale content once the newest frame is skipped (< 1000c).
-            # CRITICAL: Stop at the FIRST (newest) matching DR frame — do NOT fall through
-            # to older frames. If the newest frame is not ready (< 1000c), return ""
-            # so the outer retry loop will wait and try again.
+            # Step 1: look for a frame matching known DR URL patterns.
+            # Step 2 (fallback): look for any non-main frame with large non-echo content.
             newest_dr_frame = None
             for frame in reversed(page.frames):
+                if frame.url.startswith("https://chatgpt.com") and frame.parent_frame is None:
+                    continue  # skip main frame
                 if any(pat in frame.url for pat in _DR_PATTERNS):
                     newest_dr_frame = frame
-                    break  # stop at newest DR frame only
+                    break
+            if newest_dr_frame is None:
+                # Fallback: scan all child/sub-frames for large non-echo content
+                log.debug("[ChatGPT] No DR-pattern frame found — scanning all child frames")
+                for frame in reversed(page.frames):
+                    if frame.parent_frame is None:
+                        continue  # skip main frame
+                    if frame.url.startswith("https://chatgpt.com") or frame.url in ("", "about:blank"):
+                        continue
+                    try:
+                        flen = await frame.evaluate("document.body.innerText.length")
+                        if flen > 1000:
+                            newest_dr_frame = frame
+                            log.debug(f"[ChatGPT] Using child frame as DR: {frame.url[:80]} ({flen}c)")
+                            break
+                    except Exception:
+                        pass
+
             if newest_dr_frame is not None:
                 try:
                     text = await newest_dr_frame.evaluate("document.body.innerText")
@@ -218,8 +236,6 @@ class ChatGPT(BasePlatform):
                         return text
                     log.debug(f"[ChatGPT] Newest DR frame has {len(text) if text else 0} chars ({newest_dr_frame.url[:60]})")
                     # Don't fall through to older DR frames — return "" so outer retry waits.
-                    # (completion_check already verified DR iframe > 5000c, so this shouldn't
-                    # normally happen; it means the iframe content was lost or is an echo.)
                     return ""
                 except Exception as exc:
                     log.debug(f"[ChatGPT] frame.evaluate() failed ({newest_dr_frame.url[:60]}): {exc}")
@@ -431,16 +447,34 @@ class ChatGPT(BasePlatform):
         #   in the iframe. Polling the iframe here defers completion until DR is ready.
         #   Fallback: 60 polls (~10 min) without ever seeing a populated iframe.
         if self._mode == "DEEP":
-            # Check newest DR iframe content
-            _DR_PATTERNS_INNER = ["web-sandbox", "deep_research"]
+            # Check newest DR iframe content — mirrors _try_extract step 1 + 2
+            _DR_PAT = ["web-sandbox", "deep_research", "oaiusercontent.com", "blob:"]
             dr_frame_len = 0
             for _frame in reversed(page.frames):
-                if any(pat in _frame.url for pat in _DR_PATTERNS_INNER):
+                if _frame.parent_frame is None:
+                    continue
+                if _frame.url.startswith("https://chatgpt.com") or _frame.url in ("", "about:blank"):
+                    continue
+                if any(pat in _frame.url for pat in _DR_PAT):
                     try:
                         dr_frame_len = await _frame.evaluate("document.body.innerText.length")
                     except Exception:
                         pass
-                    break  # only check newest
+                    break
+            if dr_frame_len == 0:
+                # fallback: any cross-origin child frame with content
+                for _frame in reversed(page.frames):
+                    if _frame.parent_frame is None:
+                        continue
+                    if _frame.url.startswith("https://chatgpt.com") or _frame.url in ("", "about:blank"):
+                        continue
+                    try:
+                        l = await _frame.evaluate("document.body.innerText.length")
+                        if l > 1000:
+                            dr_frame_len = l
+                            break
+                    except Exception:
+                        pass
             if dr_frame_len > 5000:
                 log.info(f"[ChatGPT] DEEP: DR iframe has {dr_frame_len} chars — declaring complete")
                 return True

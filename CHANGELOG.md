@@ -6,6 +6,21 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040612 Alpha — ChatGPT DR iframe URL pattern expansion + child-frame fallback
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **ChatGPT DEEP returned 0c (iter 9)**: The 60-poll fallback declared complete after 10 min
+  because the DR iframe URL no longer matches `["web-sandbox", "deep_research"]`. ChatGPT has
+  updated its DR iframe URL scheme. Fix: expand patterns to `["web-sandbox", "deep_research",
+  "oaiusercontent.com", "blob:"]` and add a child-frame fallback that scans all non-main,
+  non-chatgpt.com frames with > 1000c content. Both `completion_check` and `_extract_deep_
+  research_panel` now use the same expanded + fallback logic.
+
+---
+
 ## 0.2.26040611 Alpha — ChatGPT DEEP completion gated on DR iframe content
 
 **Date:** 2026-04-06
