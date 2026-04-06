@@ -66,6 +66,10 @@ class Gemini(BasePlatform):
         """
         label_parts = []
 
+        # Extra wait — Gemini's Angular/Material UI can take a moment to render
+        # the toolbar buttons after page load.
+        await page.wait_for_timeout(2000)
+
         # Select Thinking model.
         # Gemini's default model is "Flash" (shown as "Fast" in the toolbar button).
         # Try specific selectors before falling back to generic "Gemini" text.
@@ -77,6 +81,8 @@ class Gemini(BasePlatform):
                 'button:has-text("Fast")',    # Gemini Flash labeled "Fast" in toolbar
                 'button:has-text("Flash")',   # Alternative Flash label
                 'button:has-text("Gemini")',  # Generic fallback
+                '[class*="model-switcher"] button',
+                '[class*="bard-mode"] button',
             ]:
                 btn = page.locator(selector).first
                 if await btn.count() > 0 and await btn.is_visible():
@@ -84,7 +90,7 @@ class Gemini(BasePlatform):
                     break
             if model_btn is not None:
                 await model_btn.click()
-                await page.wait_for_timeout(500)
+                await page.wait_for_timeout(800)
 
                 thinking = page.get_by_text("Thinking", exact=False).first
                 if await thinking.count() > 0:
@@ -95,43 +101,74 @@ class Gemini(BasePlatform):
         except Exception as exc:
             log.warning(f"[Gemini] Thinking model selection failed: {exc}")
 
-        # DEEP mode: enable Deep Research via Tools menu
-        # Gemini toolbar has a "Tools" button (no aria-label) that opens a MAT-ACTION-LIST
-        # menu. The "Deep research" option is a button[role="menuitemcheckbox"] inside it.
+        # DEEP mode: enable Deep Research.
+        # Strategy 1: Direct "Deep research" button/link visible in the input area.
+        # Strategy 2: Tools menu → "Deep research" menuitemcheckbox.
         if mode == "DEEP":
+            dr_enabled = False
             try:
-                # Use the input-area Tools button — it has visible text "Tools" but no aria-label.
-                # Scope to buttons WITHOUT aria-label to avoid the sidebar conversation-actions button
-                # which has aria-label="More options for ... Tools".
-                tools_btn = page.locator("button:not([aria-label])").filter(has_text="Tools").first
-                if await tools_btn.count() == 0:
-                    tools_btn = page.get_by_text("Tools", exact=True).first
-                if await tools_btn.count() > 0 and await tools_btn.is_visible():
-                    await tools_btn.click()
-                    await page.wait_for_timeout(500)
-
-                    # Target the menuitemcheckbox inside the Tools action-list menu
-                    dr = page.get_by_role("menuitemcheckbox", name="Deep research").first
-                    if await dr.count() == 0:
-                        # Fallback: any button in the menu containing "deep research"
-                        dr = page.locator('[role="menu"] button').filter(has_text="Deep research").first
-                    if await dr.count() > 0 and await dr.is_visible():
-                        await dr.click()
+                # Strategy 1: direct Deep Research button (Gemini sometimes shows it
+                # as a prominent button next to the input box, no Tools menu needed).
+                for dr_direct_sel in [
+                    'button:has-text("Deep research")',
+                    '[aria-label*="Deep research"]',
+                    '[data-testid*="deep-research"]',
+                ]:
+                    dr_btn = page.locator(dr_direct_sel).first
+                    if await dr_btn.count() > 0 and await dr_btn.is_visible():
+                        await dr_btn.click()
                         await page.wait_for_timeout(500)
-                        log.info("[Gemini] Enabled Deep Research")
+                        log.info("[Gemini] Enabled Deep Research via direct button")
                         label_parts.append("Deep Research")
-                        self._deep_mode = True  # Track for completion_check
-                    else:
-                        log.warning("[Gemini] Deep Research menu item not found or not visible — skipping")
-
-                    # Verify badge is visible (badge text uses lowercase "r")
-                    badge = page.locator('[role="menu"] button').filter(has_text="Deep research").first
-                    if await badge.count() > 0 and await badge.is_visible():
-                        log.info("[Gemini] Deep Research badge confirmed")
-                    else:
-                        log.warning("[Gemini] Deep Research badge NOT visible — may not be enabled")
+                        self._deep_mode = True
+                        dr_enabled = True
+                        break
             except Exception as exc:
-                log.warning(f"[Gemini] Deep Research enablement failed: {exc}")
+                log.debug(f"[Gemini] Direct Deep Research button approach failed: {exc}")
+
+            if not dr_enabled:
+                try:
+                    # Strategy 2: Tools menu.
+                    # Use the input-area Tools button — it has visible text "Tools" but no aria-label.
+                    # Scope to buttons WITHOUT aria-label to avoid the sidebar conversation-actions
+                    # button (aria-label="More options for ... Tools").
+                    tools_btn = page.locator("button:not([aria-label])").filter(has_text="Tools").first
+                    if await tools_btn.count() == 0:
+                        tools_btn = page.get_by_role("button", name="Tools", exact=True).first
+                    if await tools_btn.count() == 0:
+                        tools_btn = page.get_by_text("Tools", exact=True).first
+                    if await tools_btn.count() > 0 and await tools_btn.is_visible():
+                        await tools_btn.click()
+                        await page.wait_for_timeout(800)
+
+                        # Target the menuitemcheckbox inside the Tools action-list menu
+                        dr = page.get_by_role("menuitemcheckbox", name="Deep research").first
+                        if await dr.count() == 0:
+                            dr = page.locator('[role="menu"] button').filter(has_text="Deep research").first
+                        if await dr.count() == 0:
+                            # Broader fallback: any visible element with "Deep research" text in a menu
+                            dr = page.locator('[role="menuitem"], [role="option"]').filter(has_text="Deep research").first
+                        if await dr.count() > 0 and await dr.is_visible():
+                            await dr.click()
+                            await page.wait_for_timeout(500)
+                            log.info("[Gemini] Enabled Deep Research via Tools menu")
+                            label_parts.append("Deep Research")
+                            self._deep_mode = True
+                            dr_enabled = True
+                        else:
+                            log.warning("[Gemini] Deep Research menu item not found or not visible — skipping")
+                    else:
+                        log.warning("[Gemini] Tools button not found in input area")
+                except Exception as exc:
+                    log.warning(f"[Gemini] Deep Research enablement failed: {exc}")
+
+            if dr_enabled:
+                # Dismiss the Tools menu if still open
+                try:
+                    await page.keyboard.press("Escape")
+                    await page.wait_for_timeout(300)
+                except Exception:
+                    pass
 
         return " + ".join(label_parts) if label_parts else "Default"
 

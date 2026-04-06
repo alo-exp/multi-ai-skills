@@ -6,6 +6,23 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040618 Alpha — Gemini configure_mode: robust DR enablement with direct-button + Tools menu fallback
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **Gemini DR not enabled (iter 15: mode "Default", 40s response)**: configure_mode Tools
+  button and model selector both missed in iter 15 (Gemini returned normal 40s response,
+  not DR). Fixes:
+  - Add 2s wait after page load to let Angular/Material UI render toolbar buttons
+  - Add direct "Deep research" button strategy (Gemini may show it directly, no Tools menu)
+  - Add more selector fallbacks for model button and Tools button
+  - Add `Escape` key to dismiss Tools menu after DR is enabled
+  - Add `[role="menuitem"]`/`[role="option"]` as additional DR menu item fallbacks
+
+---
+
 ## 0.2.26040617 Alpha — ChatGPT DR completion threshold 5k→20k; Gemini DR timeout 120→180 polls
 
 **Date:** 2026-04-06
