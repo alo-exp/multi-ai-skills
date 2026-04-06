@@ -6,6 +6,18 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040621 Alpha — ChatGPT DR diagnostics: log all non-main frame URLs during extraction
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **ChatGPT DR diagnostics**: `_try_extract` method A fallback now logs ALL non-main
+  frame URLs and their content lengths to INFO level. This lets us identify the actual
+  DR iframe URL pattern in the next iteration and add it to `_DR_PATTERNS` if needed.
+
+---
+
 ## 0.2.26040620 Alpha — Gemini DR stable_threshold 30→90 polls (was firing 5 min too early)
 
 **Date:** 2026-04-06

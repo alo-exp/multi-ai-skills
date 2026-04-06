@@ -216,9 +216,19 @@ class ChatGPT(BasePlatform):
                     break
             if newest_dr_frame is None:
                 # Fallback: scan ALL non-main frames with substantial content.
-                # Includes same-origin chatgpt.com sub-path iframes and blank iframes
-                # (ChatGPT may use about:blank or about:srcdoc for the DR panel).
-                log.debug("[ChatGPT] No DR-pattern frame found — scanning all non-main frames")
+                # Log all frame URLs for diagnostics (helps identify new DR iframe patterns).
+                all_frames_info = []
+                for frame in page.frames:
+                    if frame != page.main_frame:
+                        try:
+                            flen = await frame.evaluate("document.body.innerText.length")
+                            all_frames_info.append(f"{frame.url[:80]}({flen}c)")
+                        except Exception:
+                            all_frames_info.append(f"{frame.url[:80]}(err)")
+                if all_frames_info:
+                    log.info(f"[ChatGPT] Non-main frames: {' | '.join(all_frames_info)}")
+                else:
+                    log.info("[ChatGPT] No non-main frames found")
                 for frame in reversed(page.frames):
                     if frame == page.main_frame:
                         continue  # skip main page frame only
@@ -226,7 +236,7 @@ class ChatGPT(BasePlatform):
                         flen = await frame.evaluate("document.body.innerText.length")
                         if flen > 2000:
                             newest_dr_frame = frame
-                            log.debug(f"[ChatGPT] Using non-main frame as DR: {frame.url[:80]} ({flen}c)")
+                            log.info(f"[ChatGPT] Using non-main frame as DR fallback: {frame.url[:80]} ({flen}c)")
                             break
                     except Exception:
                         pass
