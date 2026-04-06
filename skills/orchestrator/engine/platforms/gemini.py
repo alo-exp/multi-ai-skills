@@ -149,12 +149,30 @@ class Gemini(BasePlatform):
                             # Broader fallback: any visible element with "Deep research" text in a menu
                             dr = page.locator('[role="menuitem"], [role="option"]').filter(has_text="Deep research").first
                         if await dr.count() > 0 and await dr.is_visible():
-                            await dr.click()
-                            await page.wait_for_timeout(500)
-                            log.info("[Gemini] Enabled Deep Research via Tools menu")
-                            label_parts.append("Deep Research")
-                            self._deep_mode = True
-                            dr_enabled = True
+                            # Check if DR is already enabled (aria-checked="true").
+                            # If already on, clicking again would DISABLE it — don't click.
+                            try:
+                                is_checked = await dr.get_attribute("aria-checked")
+                                if is_checked == "true":
+                                    log.info("[Gemini] Deep Research already enabled (aria-checked=true) — skipping toggle")
+                                    label_parts.append("Deep Research")
+                                    self._deep_mode = True
+                                    dr_enabled = True
+                                else:
+                                    await dr.click()
+                                    await page.wait_for_timeout(500)
+                                    log.info("[Gemini] Enabled Deep Research via Tools menu")
+                                    label_parts.append("Deep Research")
+                                    self._deep_mode = True
+                                    dr_enabled = True
+                            except Exception:
+                                # Couldn't read aria-checked — click anyway
+                                await dr.click()
+                                await page.wait_for_timeout(500)
+                                log.info("[Gemini] Enabled Deep Research via Tools menu (no aria-checked)")
+                                label_parts.append("Deep Research")
+                                self._deep_mode = True
+                                dr_enabled = True
                         else:
                             log.warning("[Gemini] Deep Research menu item not found or not visible — skipping")
                     else:
@@ -210,10 +228,20 @@ class Gemini(BasePlatform):
             except Exception:
                 pass
 
-            # Look for "Start research" button
+            # Look for "Start research" button (or variants used by different Gemini UI versions)
             try:
-                start_btn = page.get_by_text("Start research", exact=False).first
-                if await start_btn.count() > 0 and await start_btn.is_visible():
+                start_btn = None
+                for start_text in ["Start research", "Start deep research", "Begin research", "Start"]:
+                    candidate = page.get_by_role("button", name=start_text, exact=False).first
+                    if await candidate.count() > 0 and await candidate.is_visible():
+                        start_btn = candidate
+                        break
+                if start_btn is None:
+                    # Broader fallback: any visible button with "research" in text
+                    start_btn = page.locator('button').filter(has_text="research").first
+                    if await start_btn.count() == 0 or not await start_btn.is_visible():
+                        start_btn = None
+                if start_btn is not None:
                     # Scroll into view first
                     await start_btn.scroll_into_view_if_needed()
                     await start_btn.click()

@@ -6,6 +6,22 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040623 Alpha — Gemini DR toggle idempotent + post_send broader start-button detection
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **Gemini DR not starting (iter 17: "Start research" button not found, no auto-start)**:
+  Two root causes:
+  1. DR toggle was re-clicked on an already-enabled session (toggling it OFF). Fix: read
+     `aria-checked` attribute before clicking; if already `"true"`, skip the click.
+  2. "Start research" button text may vary across Gemini UI versions. Fix: try
+     "Start research", "Start deep research", "Begin research", "Start", and a broader
+     `button:has-text("research")` fallback before giving up.
+
+---
+
 ## 0.2.26040622 Alpha — ChatGPT DR quota fast-fail: detect exhaustion before 6-min retry loop
 
 **Date:** 2026-04-06
