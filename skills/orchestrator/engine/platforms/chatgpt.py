@@ -458,8 +458,10 @@ class ChatGPT(BasePlatform):
         #   in the iframe. Polling the iframe here defers completion until DR is ready.
         #   Fallback: 60 polls (~10 min) without ever seeing a populated iframe.
         if self._mode == "DEEP":
-            # Check newest DR iframe content — mirrors _try_extract step 1 + 2.
-            # Scan non-main frames: first by known URL patterns, then all non-main frames.
+            # Check newest DR iframe content — scan ONLY frames whose URL matches
+            # known DR patterns.  Do NOT fall back to scanning all non-main frames:
+            # ChatGPT loads other non-DR frames (UI, extensions) that can have
+            # large text content and would trigger premature completion.
             _DR_PAT = ["web-sandbox", "deep_research", "oaiusercontent.com", "blob:"]
             dr_frame_len = 0
             for _frame in reversed(page.frames):
@@ -468,22 +470,10 @@ class ChatGPT(BasePlatform):
                 if any(pat in _frame.url for pat in _DR_PAT):
                     try:
                         dr_frame_len = await _frame.evaluate("document.body.innerText.length")
+                        log.debug(f"[ChatGPT] DR frame: {_frame.url[:60]} — {dr_frame_len}c")
                     except Exception:
                         pass
                     break
-            if dr_frame_len == 0:
-                # fallback: any non-main frame with substantial content
-                # (including about:blank or about:srcdoc iframes used for DR panel)
-                for _frame in reversed(page.frames):
-                    if _frame == page.main_frame:
-                        continue
-                    try:
-                        l = await _frame.evaluate("document.body.innerText.length")
-                        if l > 2000:
-                            dr_frame_len = l
-                            break
-                    except Exception:
-                        pass
             # Threshold > CMF prompt length (~9500c) so prompt echo in the DR
             # iframe doesn't trigger premature completion.  A real DR report
             # for a complex prompt is 20 000–100 000 chars.

@@ -6,6 +6,21 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040619 Alpha — ChatGPT completion_check: remove fallback-frame scan to prevent premature completion
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **ChatGPT DEEP 0c (iter 16: completion fired at ~31s)**: completion_check's fallback
+  frame scan (any non-main frame with > 2000c content) was finding ChatGPT's own UI
+  frames (non-DR, potentially > 20000c) and triggering premature completion. Fix:
+  remove the fallback scan from completion_check entirely — only frames matching known
+  DR URL patterns (`web-sandbox`, `deep_research`, `oaiusercontent.com`, `blob:`) count
+  toward the 20000c completion threshold. If no DR-pattern frame exists, wait for 60 polls.
+
+---
+
 ## 0.2.26040618 Alpha — Gemini configure_mode: robust DR enablement with direct-button + Tools menu fallback
 
 **Date:** 2026-04-06
