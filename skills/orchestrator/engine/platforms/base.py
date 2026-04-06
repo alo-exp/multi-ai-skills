@@ -648,6 +648,9 @@ class BasePlatform:
 
     async def _poll_completion(self, page: Page, max_wait_s: int) -> bool:
         """Poll until completion_check returns True or timeout."""
+        # Store max_wait_s on instance so completion_check() overrides can read it
+        # for mode-aware thresholds (e.g. DEEP mode needs a longer stable-state window).
+        self._current_max_wait_s = max_wait_s
         start = time.monotonic()
         consecutive_errors = 0
         max_consecutive_errors = 5

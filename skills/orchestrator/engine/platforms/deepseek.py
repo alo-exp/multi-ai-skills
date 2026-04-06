@@ -18,6 +18,7 @@ class DeepSeek(BasePlatform):
     def __init__(self):
         super().__init__()
         self._no_stop_polls: int = 0  # Consecutive polls with no stop button visible
+        self._current_max_wait_s: int = 600  # Default; overwritten by _poll_completion each run
 
     async def check_rate_limit(self, page: Page) -> str | None:
         """Check for DeepSeek-specific rate limit indicators.
@@ -150,31 +151,104 @@ class DeepSeek(BasePlatform):
     async def completion_check(self, page: Page) -> bool:
         """Check for completion — multi-signal with stable-state fallback.
 
-        DeepSeek uses div[role='button'] for its stop button, not <button>.
-        We must check both.
+        DeepSeek uses div[role='button'].ds-icon-button for ALL icon buttons.
+        During generation the send button is REPLACED by a stop button (same
+        component, different SVG — a square icon vs. an arrow).  There is no
+        text content and no aria-label="Stop" on this button, so :has-text()
+        and aria-label selectors both fail.
+
+        Strategy:
+        1. ds-icon-button presence in an active conversation → still generating.
+        2. Broad animated-indicator class sweep.
+        3. Copy/Regenerate buttons → definitely done.
+        4. Stable-state threshold scaled to max_wait_s so DEEP mode (600 s)
+           waits ~5 min before giving up, not 60 s.
         """
-        # 1. Check for stop button (still generating) — both <button> and div[role="button"]
-        has_stop = False
-        for sel in [
-            'button:has-text("Stop")',
-            'button[aria-label*="Stop"]',
-            '[role="button"]:has-text("Stop")',
-        ]:
+        current_url = page.url
+        in_conversation = current_url.rstrip("/") != "https://chat.deepseek.com"
+
+        # ── Step 1: Definitive completion signals (check FIRST) ──────────────
+        # Copy/Regenerate buttons appear only after generation is fully done.
+        # Check these before any "still generating" heuristics to avoid false
+        # negatives when the stop button and completion buttons overlap briefly.
+        if in_conversation:
             try:
-                stop = page.locator(sel).first
-                if await stop.count() > 0 and await stop.is_visible():
-                    has_stop = True
-                    break
+                for sel in [
+                    'button:has-text("Copy")', 'button:has-text("Regenerate")',
+                    '[role="button"]:has-text("Copy")', '[role="button"]:has-text("Regenerate")',
+                ]:
+                    btn = page.locator(sel).first
+                    if await btn.count() > 0 and await btn.is_visible():
+                        log.debug(f"[DeepSeek] Completion confirmed via '{sel}'")
+                        self._no_stop_polls = 0
+                        return True
             except Exception:
                 pass
 
-        # Also check for animated "thinking" indicators
+        # ── Step 2: Still-generating signals ─────────────────────────────────
+        has_stop = False
+
+        if in_conversation:
+            try:
+                # Primary: ds-icon-button inside the input container.
+                # DeepSeek replaces the send button with a stop button (same
+                # component, SVG-only, no text, no aria-label="Stop") once
+                # generation starts.  We locate the textarea and walk up the DOM
+                # to find the input container, then check if any ds-icon-button
+                # inside it is currently visible.  This avoids false-positives
+                # from post-response action buttons (copy/like) which live in the
+                # message area, not the input container.
+                is_generating = await page.evaluate("""() => {
+                    const textarea = document.querySelector('textarea');
+                    if (!textarea) return false;
+                    let container = textarea.parentElement;
+                    for (let i = 0; i < 6 && container && container !== document.body; i++) {
+                        const iconBtns = container.querySelectorAll('[role="button"].ds-icon-button');
+                        if (iconBtns.length > 0) {
+                            for (const btn of iconBtns) {
+                                const rect = btn.getBoundingClientRect();
+                                if (rect.width > 0 && rect.height > 0) {
+                                    return true;
+                                }
+                            }
+                        }
+                        container = container.parentElement;
+                    }
+                    return false;
+                }""")
+                if is_generating:
+                    has_stop = True
+                    log.debug("[DeepSeek] ds-icon-button in input container — still generating")
+            except Exception:
+                pass
+
+        # Fallback text/aria-label selectors (covers UI regressions / A/B variants)
+        if not has_stop:
+            for sel in [
+                'button:has-text("Stop")',
+                'button[aria-label*="Stop"]',
+                '[role="button"]:has-text("Stop")',
+                '[aria-label*="stop" i]',
+                '[aria-label*="cancel" i]',
+            ]:
+                try:
+                    stop = page.locator(sel).first
+                    if await stop.count() > 0 and await stop.is_visible():
+                        has_stop = True
+                        break
+                except Exception:
+                    pass
+
+        # Animated thinking / generating indicators
         if not has_stop:
             try:
-                # DeepSeek shows a pulsing/animated indicator while thinking
-                thinking = page.locator('[class*="thinking"], [class*="loading"], [class*="typing"]').first
-                if await thinking.count() > 0 and await thinking.is_visible():
+                indicator = page.locator(
+                    '[class*="thinking"], [class*="loading"], [class*="typing"],'
+                    '[class*="ds-thinking"], [class*="generate"], [class*="spinner"]'
+                ).first
+                if await indicator.count() > 0 and await indicator.is_visible():
                     has_stop = True
+                    log.debug("[DeepSeek] Animated indicator visible — still generating")
             except Exception:
                 pass
 
@@ -184,43 +258,26 @@ class DeepSeek(BasePlatform):
 
         self._no_stop_polls += 1
 
-        # 2. Check if we're still on the homepage (no conversation started)
-        current_url = page.url
-        if current_url.rstrip("/") == "https://chat.deepseek.com":
-            # Still on homepage — prompt likely wasn't sent
+        # ── Step 3: Homepage guard ────────────────────────────────────────────
+        if not in_conversation:
             if self._no_stop_polls < 6:
-                return False  # Wait longer
+                return False
             log.warning("[DeepSeek] Still on homepage after 60s — prompt may not have been sent")
-            return True  # Give up
+            return True
 
-        # 3. Check for copy/regenerate buttons (strongest completion signal)
-        try:
-            for sel in ['button:has-text("Copy")', 'button:has-text("Regenerate")',
-                        '[role="button"]:has-text("Copy")', '[role="button"]:has-text("Regenerate")']:
-                btn = page.locator(sel).first
-                if await btn.count() > 0 and await btn.is_visible():
-                    return True
-        except Exception:
-            pass
+        # ── Step 4: Stable-state fallback (last resort) ───────────────────────
+        # Threshold is proportional to max_wait_s so DEEP mode (600 s) waits
+        # ~300 s (30 polls) before giving up, while regular mode (120 s) waits
+        # ~60 s (6 polls).  This prevents premature truncation of long responses.
+        from config import POLL_INTERVAL as _pi  # noqa: PLC0415
+        stable_state_s = max(60, self._current_max_wait_s // 2)
+        stable_state_polls = max(6, stable_state_s // _pi)
 
-        # 4. Check for substantial response content (NOT thinking output)
-        # DeepThink mode renders thinking text in markdown-body while still
-        # generating. Only declare complete if content is very large (> 3000),
-        # indicating the actual response (not just CoT) has appeared.
-        try:
-            md = page.locator('.markdown-body, [class*="ds-markdown"]')
-            count = await md.count()
-            if count > 0:
-                last = md.nth(count - 1)
-                length = await last.evaluate("el => el.innerText.length")
-                if length > 3000:
-                    return True
-        except Exception:
-            pass
-
-        # 5. Stable-state: no stop button for 6 consecutive polls (~60s)
-        if self._no_stop_polls >= 6:
-            log.info("[DeepSeek] No stop button for 6 polls — declaring complete")
+        if self._no_stop_polls >= stable_state_polls:
+            log.info(
+                f"[DeepSeek] No stop button for {self._no_stop_polls} polls "
+                f"({self._no_stop_polls * _pi}s) — declaring complete"
+            )
             return True
 
         return False
