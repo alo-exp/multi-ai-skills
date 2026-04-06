@@ -143,6 +143,15 @@ class Perplexity(BasePlatform):
         Newer Perplexity UI uses a textarea at the bottom of the page.
         Try textarea first (preferred for new UI), then fall back to contenteditable.
         """
+        # Wait for input area to be ready — fresh page loads can be slow
+        try:
+            await page.wait_for_selector(
+                'textarea, div[contenteditable="true"]',
+                state="visible", timeout=10000,
+            )
+        except Exception:
+            pass
+
         # Primary: textarea (new Perplexity UI — home page and conversation page)
         for ta_sel in [
             'textarea[placeholder*="Ask"]',
