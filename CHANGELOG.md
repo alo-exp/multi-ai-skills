@@ -6,6 +6,20 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040626 Alpha — Gemini: quick-response fallback when DR cap exhausted
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **Gemini 30 min wait for quick response (iter 20)**: When Gemini's Deep Research daily cap
+  is exhausted, Gemini gives a regular quick response instead of deep research. The
+  `completion_check` would wait 30 min for `_seen_stop` to fire before using `no_stop_limit`.
+  Fixed: added step 5a — if `_seen_stop` was never set but `body_len > 5000` AND
+  `_no_stop_polls >= 6` (60s stable), declare complete immediately.
+
+---
+
 ## 0.2.26040625 Alpha — Claude.ai: remove sidebar false-positive; conversation-turn extraction; 60 min timeout
 
 **Date:** 2026-04-06

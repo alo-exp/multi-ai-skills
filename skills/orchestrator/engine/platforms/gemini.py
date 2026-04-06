@@ -395,6 +395,13 @@ class Gemini(BasePlatform):
             log.info(f"[Gemini] No stop button for {stable_threshold} polls after research started — declaring complete")
             return True
 
+        # 5a. Quick-response fallback: if _seen_stop was never set (no DR started) but body
+        #     has substantial content, Gemini gave a regular response instead of DR
+        #     (e.g. DR daily cap exhausted).  Don't waste 30 min — declare after 6 stable polls.
+        if not self._seen_stop and body_len_check > 5000 and self._no_stop_polls >= 6:
+            log.info(f"[Gemini] No DR indicators seen, body {body_len_check}c stable for 6 polls — quick/regular response, declaring complete")
+            return True
+
         # 5. Extended fallback: if still no stop/cancel/thinking signal seen after
         #    N polls, something is wrong (post_send may have missed "Start research",
         #    or the DR UI changed).  Declare complete.
