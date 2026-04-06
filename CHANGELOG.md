@@ -6,6 +6,41 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040628 Alpha — Claude.ai Research failure detection and connector dialog handling
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **Claude.ai Research failure returns sidebar junk instead of error**: When Claude.ai
+  Research mode hits a failure state ("Stopped: No response on which connectors to enable
+  during research"), `completion_check()` never detected it — the "Stopped" button text
+  matched the `has-text("Stop")` substring selector, keeping `has_stop=True` for the full
+  3600s timeout. After timeout, `extract_response()` ran against a page with zero response
+  content and fell through to the raw `body.innerText` fallback (~9,400 chars of sidebar
+  navigation text). Fixed with four targeted changes:
+
+  1. **Detect research failure in `completion_check()`**: Added priority check for
+     `button[aria-label*="Stopped"]` / `button:text-is("Stopped")` before the normal stop
+     scan. When matched, sets `self._research_failed = True` and returns `True` immediately
+     so the orchestrator stops waiting.
+
+  2. **Return error from `extract_response()` when research failed**: At the very start of
+     extraction, if `self._research_failed` is set, return a descriptive
+     `[RESEARCH FAILED] Claude.ai Research stopped: {reason}` string instead of falling
+     through to sidebar junk. The caller can detect and handle the failure explicitly.
+
+  3. **Tighten Stop button selector**: Added an explicit exclusion in the stop-button scan
+     — skip any button whose `aria-label` starts with "stopped" (case-insensitive) to
+     prevent the research-failed state button from being confused with a generation stop.
+
+  4. **Auto-dismiss connector selection dialog**: After enabling Research mode in
+     `configure_mode()`, wait 3s and attempt to dismiss any connector selection dialog
+     (buttons: "Enable", "Start research", "Continue", `[aria-label*="connector"]`) so
+     the prompt can proceed without a blocking human response.
+
+---
+
 ## 0.2.26040627 Alpha — Claude.ai bring_to_front; Perplexity join all prose divs
 
 **Date:** 2026-04-06

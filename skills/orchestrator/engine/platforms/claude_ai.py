@@ -20,6 +20,8 @@ class ClaudeAI(BasePlatform):
         self._no_stop_polls: int = 0    # Consecutive polls with no stop button visible
         self._total_polls: int = 0     # Total polls since waiting started
         self._artifact_clicked: bool = False  # Whether artifact card has been clicked already
+        self._research_failed: bool = False   # Set when Research mode hits a failure state
+        self._research_failed_reason: str = ""  # Reason string from the "Stopped" button aria-label
 
     async def check_rate_limit(self, page: Page) -> str | None:
         """Check for Claude.ai-specific rate limit indicators."""
@@ -95,6 +97,25 @@ class ClaudeAI(BasePlatform):
                         await page.wait_for_timeout(300)
                         log.info("[Claude.ai] Enabled Web search")
                         label_parts.append("Web search")
+
+                    # Dismiss connector selection dialog if it appears after enabling Research.
+                    # Claude.ai may prompt the user to choose connectors — auto-dismiss so the
+                    # prompt can proceed without a human response blocking Research mode.
+                    await page.wait_for_timeout(3000)
+                    for conn_sel in [
+                        'button:has-text("Enable")',
+                        'button:has-text("Start research")',
+                        'button:has-text("Continue")',
+                        '[aria-label*="connector"]',
+                    ]:
+                        try:
+                            btn = page.locator(conn_sel).first
+                            if await btn.count() > 0 and await btn.is_visible():
+                                await btn.evaluate("el => el.dispatchEvent(new MouseEvent('click', {bubbles:true}))")
+                                log.info(f"[Claude.ai] Dismissed connector dialog via {conn_sel!r}")
+                                break
+                        except Exception:
+                            pass
             except Exception as exc:
                 log.warning(f"[Claude.ai] Research/Web search enablement failed: {exc}")
 
@@ -149,12 +170,42 @@ class ClaudeAI(BasePlatform):
             except Exception:
                 pass
 
+        # Check for Research failure state — takes priority over normal stop detection.
+        # The failure button has aria-label like "Stopped: No response on which connectors...".
+        # Must be checked BEFORE the generic stop-button scan because has-text("Stop") would
+        # match the "Stopped" text as a substring and block the stable-state fallback forever.
+        for sel in [
+            'button[aria-label*="Stopped"]',
+            'button:text-is("Stopped")',
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.count() > 0 and await el.is_visible():
+                    try:
+                        reason = await el.get_attribute("aria-label") or "unknown"
+                    except Exception:
+                        reason = "unknown"
+                    log.warning(f"[Claude.ai] Research failed: {reason!r}")
+                    self._research_failed = True
+                    self._research_failed_reason = reason
+                    return True  # Declare complete so extract_response can return an error string
+            except Exception:
+                pass
+
         # Check for stop button (still generating)
         has_stop = False
         for sel in ['button:has-text("Stop")', 'button[aria-label*="Stop"]']:
             try:
                 stop = page.locator(sel).first
                 if await stop.count() > 0 and await stop.is_visible():
+                    # Exclude the research-failed "Stopped: ..." button (already handled above,
+                    # but guard here in case a different selector variant matches it)
+                    try:
+                        aria = await stop.get_attribute("aria-label") or ""
+                        if aria.lower().startswith("stopped"):
+                            continue
+                    except Exception:
+                        pass
                     has_stop = True
                     break
             except Exception:
@@ -220,6 +271,13 @@ class ClaudeAI(BasePlatform):
         Playwright frames or page.evaluate. We download the DOCX and extract
         text via python-docx.
         """
+        # Research failure guard — if completion_check detected a Research failure,
+        # return a descriptive error immediately instead of falling through to sidebar junk.
+        if self._research_failed:
+            msg = f"[RESEARCH FAILED] Claude.ai Research stopped: {self._research_failed_reason}"
+            log.warning(f"[Claude.ai] {msg}")
+            return msg
+
         # Check for rate limiting
         try:
             rate = page.get_by_text("Usage limit reached", exact=False).first
