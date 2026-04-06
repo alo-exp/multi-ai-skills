@@ -234,11 +234,17 @@ class ChatGPT(BasePlatform):
             if newest_dr_frame is not None:
                 try:
                     text = await newest_dr_frame.evaluate("document.body.innerText")
-                    if text and len(text) > 1000 and not is_prompt_echo(text, self.prompt_sigs):
+                    is_echo = is_prompt_echo(text, self.prompt_sigs)
+                    # The CMF prompt instructs the AI to use "SECTION A, B, C..." headers;
+                    # the AI response legitimately repeats these headers — is_prompt_echo
+                    # would incorrectly flag a real 10k+ DR report as an echo.
+                    # Allow large responses (> 10000c) to bypass the echo filter.
+                    allow_echo = (len(text) > 10000)
+                    if text and len(text) > 1000 and (not is_echo or allow_echo):
                         log.info(f"[ChatGPT] Extracted {len(text)} chars via frame.evaluate() (frame: {newest_dr_frame.url[:60]})")
                         return text
-                    log.debug(f"[ChatGPT] Newest DR frame has {len(text) if text else 0} chars ({newest_dr_frame.url[:60]})")
-                    # Don't fall through to older DR frames — return "" so outer retry waits.
+                    log.debug(f"[ChatGPT] Newest DR frame has {len(text) if text else 0} chars, echo={is_echo} ({newest_dr_frame.url[:60]})")
+                    # Not ready yet — return "" so outer retry loop waits.
                     return ""
                 except Exception as exc:
                     log.debug(f"[ChatGPT] frame.evaluate() failed ({newest_dr_frame.url[:60]}): {exc}")

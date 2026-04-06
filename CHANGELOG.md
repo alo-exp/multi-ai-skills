@@ -6,6 +6,21 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040616 Alpha — ChatGPT DR frame extraction: allow large responses that echo prompt headers
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **ChatGPT DEEP still 0c (iter 13)**: Full page reload worked (old DR iframes gone; ChatGPT
+  found DR iframe at 396s → completion fired). But `_try_extract` method A rejected the DR
+  content via `is_prompt_echo` because the CMF prompt instructs "SECTION A/B/C..." headers
+  that the AI response legitimately repeats. Any DR content starting with "SECTION A" was
+  flagged as an echo → return "" → 0c. Fix: `allow_echo = (len(text) > 10000)` in method A
+  — a 10k+ DR report can't be just the 6k prompt, even if it reuses the instructed headers.
+
+---
+
 ## 0.2.26040615 Alpha — ChatGPT force full page reload to clear stale DR iframes
 
 **Date:** 2026-04-06
