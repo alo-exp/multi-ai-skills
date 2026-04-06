@@ -314,14 +314,14 @@ class Gemini(BasePlatform):
                     '[class*="progress"] :text("Thinking"), '
                     '[class*="deep-research"] :text("Thinking"), '
                     'model-response :text("Thinking"), '
-                    'div:text-is("Thinking"), '
-                    'span:text-is("Thinking"), '
                     # Broader DR progress phrases — Gemini shows these during research phases
                     'div:has-text("Searching the web"), '
                     'div:has-text("Reading"), '
-                    'span:has-text("Searching"), '
-                    # Any non-button element with "Thinking" text (catches DOM structure changes)
-                    ':not(button):text-is("Thinking")'
+                    'span:has-text("Searching")'
+                    # NOTE: broad 'div:text-is("Thinking")' and ':not(button):text-is("Thinking")'
+                    # intentionally removed — these match the persistent "Thinking" mode selector
+                    # button in the bottom input bar (visible even after DR completes), causing
+                    # has_stop=True permanently and blocking completion detection.
                 ).first
                 if await thinking_el.count() > 0 and await thinking_el.is_visible():
                     has_stop = True
@@ -357,6 +357,10 @@ class Gemini(BasePlatform):
                 # Gemini response actions row (typically below the completed message)
                 '[class*="response-container"] button:has-text("Copy")',
                 '[class*="response-container"] button:has-text("Share")',
+                # Gemini Deep Research report panel — "Share & Export" button appears
+                # in the report panel header only when DR is complete. Distinct from
+                # the page-level share icon (which has no text label).
+                'button:has-text("Share & Export")',
             ]
             for sel in scoped_sels:
                 try:
