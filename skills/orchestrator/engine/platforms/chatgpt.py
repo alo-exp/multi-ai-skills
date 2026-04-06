@@ -518,6 +518,21 @@ class ChatGPT(BasePlatform):
         contains quota-exhaustion phrases, return a [RATE LIMITED] marker
         instead of a spuriously-successful short response.
         """
+        # DEEP mode: fast quota-exhaustion check BEFORE entering the 6-min DR retry loop.
+        # check_rate_limit() already fires in _poll_completion and exits early, but
+        # extract_response would then waste 6 min retrying the DR panel.
+        # Checking here avoids that delay when the quota message is in the page body.
+        if self._mode == "DEEP":
+            try:
+                body_quick = await page.evaluate("document.body.innerText")
+                body_lower = body_quick.lower()
+                for phrase in self._DR_QUOTA_PHRASES:
+                    if phrase in body_lower:
+                        log.warning(f"[ChatGPT] DR quota detected at extraction start: {phrase!r}")
+                        return f"[RATE LIMITED] ChatGPT Deep Research quota exhausted. {body_quick[:500]}"
+            except Exception:
+                pass
+
         # DEEP mode primary: DR panel download icon → 'Copy contents' → clipboard.
         # The DR report lives in a cross-origin iframe; this is the only reliable path.
         if self._mode == "DEEP":

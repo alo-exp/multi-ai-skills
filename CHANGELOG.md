@@ -6,6 +6,21 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040622 Alpha — ChatGPT DR quota fast-fail: detect exhaustion before 6-min retry loop
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **ChatGPT DEEP 0c (iter 17: DR quota exhausted = "lighter version of deep research")**:
+  `check_rate_limit` fires in `_poll_completion` (correct), but `extract_response` then
+  entered the 6-min DR retry loop before reaching the quota-phrase check in the main-
+  container fallback. Fix: check quota-exhaustion phrases in `body.innerText` at the very
+  START of `extract_response` (before `_extract_deep_research_panel`) and return
+  `[RATE LIMITED]` immediately. Saves 6 min of wasted retries per exhausted run.
+
+---
+
 ## 0.2.26040621 Alpha — ChatGPT DR diagnostics: log all non-main frame URLs during extraction
 
 **Date:** 2026-04-06
