@@ -199,22 +199,27 @@ class ChatGPT(BasePlatform):
         # Inner function: one extraction attempt across all three methods
         async def _try_extract() -> str:
             # --- A: Direct CDP frame text extraction (no clicks required) ---
-            # Iterate REVERSED so we get the MOST RECENTLY added DR iframe first.
-            # ChatGPT keeps old DR panels in memory when navigating to a new chat,
-            # so forward iteration would return stale content from a previous run.
-            # Reversed iteration gives us the newest DR iframe (current conversation)
-            # before older stale ones.
+            # Find the NEWEST DR iframe (last in page.frames list = most recently added).
+            # ChatGPT keeps old DR panels in memory; forward/fall-through iteration
+            # would return stale content once the newest frame is skipped (< 1000c).
+            # CRITICAL: Stop at the FIRST (newest) matching DR frame — do NOT fall through
+            # to older frames. If the newest frame is not ready (< 1000c), return ""
+            # so the outer retry loop will wait and try again.
+            newest_dr_frame = None
             for frame in reversed(page.frames):
-                if not any(pat in frame.url for pat in _DR_PATTERNS):
-                    continue
+                if any(pat in frame.url for pat in _DR_PATTERNS):
+                    newest_dr_frame = frame
+                    break  # stop at newest DR frame only
+            if newest_dr_frame is not None:
                 try:
-                    text = await frame.evaluate("document.body.innerText")
+                    text = await newest_dr_frame.evaluate("document.body.innerText")
                     if text and len(text) > 1000 and not is_prompt_echo(text, self.prompt_sigs):
-                        log.info(f"[ChatGPT] Extracted {len(text)} chars via frame.evaluate() (frame: {frame.url[:60]})")
+                        log.info(f"[ChatGPT] Extracted {len(text)} chars via frame.evaluate() (frame: {newest_dr_frame.url[:60]})")
                         return text
-                    log.debug(f"[ChatGPT] frame.evaluate() gave {len(text) if text else 0} chars (frame: {frame.url[:60]}) — trying next method")
+                    log.debug(f"[ChatGPT] Newest DR frame has {len(text) if text else 0} chars — not ready yet ({newest_dr_frame.url[:60]})")
+                    return ""  # not ready; let outer loop retry
                 except Exception as exc:
-                    log.debug(f"[ChatGPT] frame.evaluate() failed ({frame.url[:60]}): {exc}")
+                    log.debug(f"[ChatGPT] frame.evaluate() failed ({newest_dr_frame.url[:60]}): {exc}")
 
             # --- B: frame_locator selector-based button click + clipboard ---
             # Use "last" iframe matching the pattern (most recent DR for this conversation).
@@ -314,11 +319,18 @@ class ChatGPT(BasePlatform):
         if result:
             return result
 
-        # If all methods returned empty, DR iframe may not yet be populated.
-        # Wait 10s and try once more before giving up.
-        log.info("[ChatGPT] DR panel extraction returned empty — waiting 10s and retrying")
-        await page.wait_for_timeout(10000)
-        return await _try_extract()
+        # If all methods returned empty, the newest DR iframe is not yet populated.
+        # Retry up to 6 times with 30s waits (3 min total) before giving up.
+        # This handles DR reports that stream in after completion is declared.
+        for attempt in range(6):
+            wait_s = 30
+            log.info(f"[ChatGPT] DR panel empty (attempt {attempt + 1}/6) — waiting {wait_s}s...")
+            await page.wait_for_timeout(wait_s * 1000)
+            result = await _try_extract()
+            if result:
+                return result
+        log.warning("[ChatGPT] DR panel never populated after 6 retries — giving up")
+        return ""
 
     async def completion_check(self, page: Page) -> bool:
         """Check for completion — uses multi-signal approach.

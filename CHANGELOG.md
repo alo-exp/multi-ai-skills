@@ -6,6 +6,22 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+## 0.2.26040610 Alpha — ChatGPT DR frame isolation, extended retry
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **ChatGPT DEEP still returning old DR document (iter 7)**: Body stability guard wasn't
+  sufficient because reversed-frame iteration falls through to older DR frames when the
+  newest one is empty (< 1000c). Fix: stop at the FIRST (newest) DR frame and return ""
+  immediately when it's not ready — do NOT fall through to older stale frames.
+- **DR extraction retry extended from 10s×1 to 30s×6** (3 min total): after completion
+  is declared, the newest DR iframe may take up to 3 min to fully render its report.
+  Previous single 10s retry was too short.
+
+---
+
 ## 0.2.26040609 Alpha — ChatGPT DEEP body-threshold stability guard
 
 **Date:** 2026-04-06
