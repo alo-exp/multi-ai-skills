@@ -320,16 +320,17 @@ class ChatGPT(BasePlatform):
             return result
 
         # If all methods returned empty, the newest DR iframe is not yet populated.
-        # Retry up to 6 times with 30s waits (3 min total) before giving up.
-        # This handles DR reports that stream in after completion is declared.
-        for attempt in range(6):
+        # Retry up to 12 times with 30s waits (6 min total) before giving up.
+        # Rationale: completion_check fires ~2 min in (body>50k after stop gone 30s),
+        # but ChatGPT DR typically takes 5-10 min to populate the report iframe.
+        for attempt in range(12):
             wait_s = 30
-            log.info(f"[ChatGPT] DR panel empty (attempt {attempt + 1}/6) — waiting {wait_s}s...")
+            log.info(f"[ChatGPT] DR panel empty (attempt {attempt + 1}/12) — waiting {wait_s}s...")
             await page.wait_for_timeout(wait_s * 1000)
             result = await _try_extract()
             if result:
                 return result
-        log.warning("[ChatGPT] DR panel never populated after 6 retries — giving up")
+        log.warning("[ChatGPT] DR panel never populated after 12 retries (6 min) — giving up")
         return ""
 
     async def completion_check(self, page: Page) -> bool:

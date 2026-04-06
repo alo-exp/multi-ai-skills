@@ -16,9 +16,9 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
   sufficient because reversed-frame iteration falls through to older DR frames when the
   newest one is empty (< 1000c). Fix: stop at the FIRST (newest) DR frame and return ""
   immediately when it's not ready — do NOT fall through to older stale frames.
-- **DR extraction retry extended from 10s×1 to 30s×6** (3 min total): after completion
-  is declared, the newest DR iframe may take up to 3 min to fully render its report.
-  Previous single 10s retry was too short.
+- **DR extraction retry extended from 10s×1 to 30s×12** (6 min total): completion_check
+  fires ~2 min in (body>50k after stop gone 30s), but ChatGPT DR typically takes 5-10 min
+  to populate the report iframe. 6 min of retries should cover the gap.
 
 ---
 
