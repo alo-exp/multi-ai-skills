@@ -2,9 +2,12 @@
 
 import sys
 import types
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
-ENGINE_DIR = "/Users/shafqat/Documents/Projects/MultAI/skills/orchestrator/engine"
+ENGINE_DIR = str(Path(__file__).resolve().parent.parent)
+if ENGINE_DIR not in sys.path:
+    sys.path.insert(0, ENGINE_DIR)
 
 
 def install_stubs(platform_name, platform_url):

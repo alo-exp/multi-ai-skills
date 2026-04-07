@@ -110,7 +110,9 @@ def _resolve_output_dir(args: argparse.Namespace) -> str:
         safe = "".join(c if c.isalnum() or c in "-_. " else "-" for c in args.task_name).strip()
         return str(_PROJECT_ROOT / "reports" / safe)
     resolved = Path(args.output_dir).resolve()
-    if not str(resolved).startswith(str(_PROJECT_ROOT)):
+    try:
+        resolved.relative_to(_PROJECT_ROOT.resolve())
+    except ValueError:
         log.error(
             f"--output-dir must be within the project root ({_PROJECT_ROOT}). Got: {resolved}"
         )

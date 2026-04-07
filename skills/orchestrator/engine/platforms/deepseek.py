@@ -6,6 +6,7 @@ import logging
 
 from playwright.async_api import Page
 
+from config import POLL_INTERVAL
 from .base import BasePlatform
 from prompt_echo import is_prompt_echo
 
@@ -273,7 +274,7 @@ class DeepSeek(BasePlatform):
         # If the page body text stops growing for N consecutive polls, generation
         # has ended.  This is a reliable secondary signal that avoids the
         # ds-icon-button false-positive problem entirely.
-        from config import POLL_INTERVAL as _pi  # noqa: PLC0415
+        _pi = POLL_INTERVAL
         try:
             current_text_len: int = await page.evaluate("() => document.body.innerText.length")
             if current_text_len > self._prev_text_len:

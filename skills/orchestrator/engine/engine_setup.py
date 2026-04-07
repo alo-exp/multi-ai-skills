@@ -13,6 +13,13 @@ _ENGINE_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _ENGINE_DIR.parent.parent.parent
 
 
+def _strip_quotes(val: str) -> str:
+    """Remove matching outer quotes only (single or double)."""
+    if len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):
+        return val[1:-1]
+    return val
+
+
 def _load_dotenv() -> None:
     """Read <project-root>/.env into os.environ (stdlib only). Existing vars are never overwritten."""
     env_file = _PROJECT_ROOT / ".env"
@@ -25,7 +32,7 @@ def _load_dotenv() -> None:
                 continue
             key, _, value = line.partition("=")
             key = key.strip()
-            value = value.strip().strip('"').strip("'")
+            value = _strip_quotes(value.strip())
             if key and key not in os.environ:
                 os.environ[key] = value
 

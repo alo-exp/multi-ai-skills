@@ -49,6 +49,11 @@ async def handle_agent_fallbacks(
     """Attempt full browser-use agent run for STATUS_FAILED platforms in-place."""
     if not agent_mgr.enabled:
         return
+    # NOTE: failed_idxs is captured from results before login-retry runs.
+    # A platform that recovers via login-retry will not appear in failed_idxs
+    # and will not receive an agent-fallback attempt. This is intentional —
+    # a successful login-retry means the platform ran; agent-fallback is for
+    # structural failures only.
     failed_idxs = [
         (i, r) for i, r in enumerate(final_results)
         if r.get("status") == STATUS_FAILED

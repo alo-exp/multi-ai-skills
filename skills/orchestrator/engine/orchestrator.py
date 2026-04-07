@@ -156,12 +156,16 @@ async def _gather_with_timeout(async_tasks, global_timeout, launched_names):
             if not task.done():
                 task.cancel()
         await asyncio.gather(*async_tasks, return_exceptions=True)
-        return [
-            (task.exception() if not task.cancelled() and task.exception() else task.result())
-            if task.done() and not task.cancelled()
-            else asyncio.TimeoutError("Global ceiling exceeded")
-            for task in async_tasks
-        ]
+        results = []
+        for task in async_tasks:
+            if task.done() and not task.cancelled():
+                try:
+                    results.append(task.result())
+                except (asyncio.CancelledError, Exception) as exc:
+                    results.append(exc)
+            else:
+                results.append(asyncio.TimeoutError("Global ceiling exceeded"))
+        return results
 
 
 async def _run_all_platforms(context, args, platform_names, full_prompt, condensed_prompt,
@@ -248,7 +252,11 @@ async def orchestrate(args, effective_output_dir: str) -> list[dict]:
             prefs = json.loads(prefs_path.read_text(encoding="utf-8"))
             if prefs.get("profile", {}).get("exit_type") != "Normal":
                 prefs.setdefault("profile", {})["exit_type"] = "Normal"
-                prefs_path.write_text(json.dumps(prefs, ensure_ascii=False), encoding="utf-8")
+                import tempfile, os as _os
+                with tempfile.NamedTemporaryFile('w', dir=prefs_path.parent, delete=False, suffix='.tmp') as _f:
+                    _f.write(json.dumps(prefs, indent=2, ensure_ascii=False))
+                    _tmp = _f.name
+                _os.replace(_tmp, prefs_path)
         except Exception as exc:
             log.warning(f"Could not fix Chrome exit_type: {exc}")
 

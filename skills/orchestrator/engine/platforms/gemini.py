@@ -397,10 +397,9 @@ class Gemini(BasePlatform):
         #    GUARD: require _seen_stop so this does not fire while the plan/prompt echo
         #    is still on screen before actual research begins.
         try:
-            body_len = await page.evaluate("document.body.innerText.length")
             threshold = 50000 if self._deep_mode else 15000
-            if body_len > threshold and self._seen_stop:
-                log.info(f"[Gemini] Body text {body_len} > {threshold} after research started — declaring complete")
+            if body_len_check > threshold and self._seen_stop:
+                log.info(f"[Gemini] Body text {body_len_check} > {threshold} after research started — declaring complete")
                 return True
         except Exception:
             pass
@@ -431,7 +430,7 @@ class Gemini(BasePlatform):
         if not self._seen_stop and body_len_check > 5000 and self._no_stop_polls >= 6:
             if self._dr_start_unconfirmed:
                 # Attempt to bring tab to front periodically so DR progress renders
-                if self._no_stop_polls in (6, 12, 24, 48):
+                if self._no_stop_polls in (6, 12, 24, 48, 96):
                     try:
                         await page.bring_to_front()
                         log.debug(f"[Gemini] _dr_start_unconfirmed — brought tab to front at poll {self._no_stop_polls}")

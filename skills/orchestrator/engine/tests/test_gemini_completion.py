@@ -4,7 +4,8 @@ import sys
 import unittest
 from unittest.mock import AsyncMock, MagicMock
 
-sys.path.insert(0, "/Users/shafqat/Documents/Projects/MultAI/skills/orchestrator/engine")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tests.conftest import install_stubs
 
 

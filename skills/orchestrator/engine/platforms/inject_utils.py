@@ -46,7 +46,13 @@ class InjectMixin:
         return length
 
     async def _inject_clipboard_paste(self, page: Page, prompt: str) -> int:
-        """Fallback injection via system clipboard + paste keystroke."""
+        """Fallback injection via system clipboard + paste keystroke.
+
+        # SECURITY NOTE: This method temporarily writes the full prompt to the OS clipboard.
+        # Clipboard-history tools running concurrently may capture the content.
+        # This injection method is a last resort — prefer _inject_exec_command.
+        # Clipboard is restored to its prior content after paste where supported.
+        """
         if sys.platform == "darwin":
             subprocess.run(["pbcopy"], input=prompt.encode("utf-8"), timeout=5, check=True)
         elif sys.platform == "linux":
