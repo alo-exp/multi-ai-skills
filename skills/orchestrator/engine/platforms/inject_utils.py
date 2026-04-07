@@ -83,6 +83,22 @@ class InjectMixin:
         await page.keyboard.press(f"{modifier}+KeyV")
         await page.wait_for_timeout(500)
 
+        # SECURITY: Clear clipboard after paste to prevent residual prompt exposure (SENTINEL F-003)
+        try:
+            if sys.platform == "darwin":
+                subprocess.run(["pbcopy"], input=b"", timeout=3, check=False)
+            elif sys.platform == "linux":
+                for _cmd in [["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"], ["wl-copy"]]:
+                    try:
+                        subprocess.run(_cmd, input=b"", timeout=3, check=False)
+                        break
+                    except (FileNotFoundError, subprocess.CalledProcessError):
+                        continue
+            elif sys.platform == "win32":
+                subprocess.run(["clip"], input=b"", timeout=3, check=False)
+        except Exception:
+            pass  # Non-fatal — clipboard clear failure should not abort injection
+
         length = await page.evaluate("""
             (document.querySelector('div[contenteditable="true"]')
              || document.querySelector('[contenteditable="true"]')).textContent.length

@@ -22,6 +22,9 @@ def detect_chrome_executable() -> str:
     return "google-chrome"
 
 
+# SECURITY NOTE (SENTINEL F-005): For best isolation, run Chrome with a dedicated profile
+# (e.g. --chrome-profile MultAI) that contains only AI platform logins. This limits the
+# CDP blast radius to AI platform sessions rather than the user's full browsing history.
 def detect_chrome_user_data_dir() -> str:
     system = _platform.system()
     home = Path.home()

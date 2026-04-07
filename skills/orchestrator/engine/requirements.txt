@@ -1,12 +1,13 @@
-# MultAI engine — core runtime dependencies
+# MultAI engine — core runtime dependencies (pinned — keep in sync with ../../requirements.txt)
 # Install via: pip install -r skills/orchestrator/engine/requirements.txt
 # Or use the repo-root bootstrap: bash setup.sh  (recommended)
 
-playwright>=1.40.0
-openpyxl>=3.1.0
+# SECURITY: All versions pinned to prevent supply-chain substitution (SENTINEL F-007)
+playwright==1.58.0
+openpyxl==3.1.5
 
 # Optional: browser-use agent fallback (requires Python >=3.11)
 # Uncomment or install separately:
 # browser-use==0.12.2
-# anthropic>=0.76.0
-# fastmcp>=2.0.0
+# anthropic==0.76.0
+# fastmcp==2.0.0
