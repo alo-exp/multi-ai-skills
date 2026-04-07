@@ -20,6 +20,7 @@ class Gemini(BasePlatform):
         self._no_stop_polls: int = 0   # Consecutive polls with no stop button visible
         self._seen_stop: bool = False  # True once a stop button has been observed (research actually started)
         self._deep_mode: bool = False  # True when Deep Research mode is active
+        self._dr_start_unconfirmed: bool = False  # True when "Start research" was clicked but Stop not yet confirmed
 
     async def check_rate_limit(self, page: Page) -> str | None:
         """Check for Gemini-specific rate limit indicators.
@@ -256,19 +257,39 @@ class Gemini(BasePlatform):
                     if await start_btn.count() == 0 or not await start_btn.is_visible():
                         start_btn = None
                 if start_btn is not None:
+                    # Bring tab to front so Gemini's Angular SPA renders the DR progress UI.
+                    # In a 7-platform parallel run the tab is often backgrounded; without focus
+                    # the Stop/Cancel button may not appear within the check window.
+                    try:
+                        await page.bring_to_front()
+                        await page.wait_for_timeout(500)
+                    except Exception:
+                        pass
+
                     # Scroll into view first
                     await start_btn.scroll_into_view_if_needed()
                     await start_btn.click()
                     log.info("[Gemini] Clicked 'Start research' button")
 
-                    # Verify crawl started — look for stop OR cancel button
-                    await page.wait_for_timeout(5000)
-                    for sel in ['button:has-text("Stop")', 'button[aria-label*="Stop"]',
-                                'button:has-text("Cancel")', 'button[aria-label*="Cancel"]']:
-                        stop = page.locator(sel).first
-                        if await stop.count() > 0:
-                            log.info("[Gemini] Research crawl started")
-                            return
+                    # Verify crawl started — poll for stop OR cancel button for up to 60s.
+                    # The 5-platform parallel run backgrounds Gemini's tab; Angular renders
+                    # the Stop button lazily so a single 5s check misses it.
+                    _stop_confirmed = False
+                    for _check in range(12):  # 12 × 5s = 60s
+                        await page.wait_for_timeout(5000)
+                        for sel in ['button:has-text("Stop")', 'button[aria-label*="Stop"]',
+                                    'button:has-text("Cancel")', 'button[aria-label*="Cancel"]']:
+                            stop = page.locator(sel).first
+                            if await stop.count() > 0 and await stop.is_visible():
+                                log.info(f"[Gemini] Research crawl confirmed started (check {_check + 1})")
+                                _stop_confirmed = True
+                                break
+                        if _stop_confirmed:
+                            break
+                    if not _stop_confirmed:
+                        log.warning("[Gemini] Stop/Cancel not seen within 60s after 'Start research' click — "
+                                    "marking _dr_start_unconfirmed; polling will not use quick-response fallback")
+                        self._dr_start_unconfirmed = True
                     return
             except Exception as exc:
                 log.debug(f"[Gemini] Start research button not found yet: {exc}")
@@ -402,9 +423,26 @@ class Gemini(BasePlatform):
         # 5a. Quick-response fallback: if _seen_stop was never set (no DR started) but body
         #     has substantial content, Gemini gave a regular response instead of DR
         #     (e.g. DR daily cap exhausted).  Don't waste 30 min — declare after 6 stable polls.
+        #
+        #     EXCEPTION: if _dr_start_unconfirmed is True, "Start research" was clicked but the
+        #     Stop/Cancel button was not confirmed within 60s (likely because the tab was
+        #     backgrounded in a parallel run and Angular hadn't rendered the DR progress UI yet).
+        #     In that case, skip this fast-exit and allow the full no_stop_limit (180 polls)
+        #     so that DR has time to surface.  Also bring the tab to front on early polls so
+        #     Gemini's SPA can render the DR progress indicators.
         if not self._seen_stop and body_len_check > 5000 and self._no_stop_polls >= 6:
-            log.info(f"[Gemini] No DR indicators seen, body {body_len_check}c stable for 6 polls — quick/regular response, declaring complete")
-            return True
+            if self._dr_start_unconfirmed:
+                # Attempt to bring tab to front periodically so DR progress renders
+                if self._no_stop_polls in (6, 12, 24, 48):
+                    try:
+                        await page.bring_to_front()
+                        log.debug(f"[Gemini] _dr_start_unconfirmed — brought tab to front at poll {self._no_stop_polls}")
+                    except Exception:
+                        pass
+                log.debug(f"[Gemini] _dr_start_unconfirmed — suppressing quick-response fallback at poll {self._no_stop_polls}")
+            else:
+                log.info(f"[Gemini] No DR indicators seen, body {body_len_check}c stable for 6 polls — quick/regular response, declaring complete")
+                return True
 
         # 5. Extended fallback: if still no stop/cancel/thinking signal seen after
         #    N polls, something is wrong (post_send may have missed "Start research",
