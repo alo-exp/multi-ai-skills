@@ -6,6 +6,108 @@ Versioning scheme: `Major.Minor.YYMMDDX Phase` — see [CI/CD Strategy](docs/CIC
 
 ---
 
+
+## 0.2.26040636 Alpha — Code review fixes, clipboard docstring, top-level imports
+
+**Date:** 2026-04-08
+
+### Fixes
+
+- **Portable test paths**: Replaced hardcoded absolute paths in tests with `pathlib`-relative paths for cross-machine portability.
+- **Atomic preference write**: Config/preference writes now use an atomic temp-file + rename pattern to prevent partial writes on crash.
+- **`gather` timeout clarity**: `asyncio.gather` calls now use explicit `asyncio.wait_for` wrappers with documented timeouts.
+- **Env parser robustness**: `.env` file parser handles edge cases (missing `=`, empty values, inline comments) without raising.
+- **Path guard in output writer**: Added existence check before writing to output directory to prevent silent failures on missing paths.
+- **Clipboard docstring correction**: Fixed false claim in clipboard utility docstring (claimed to use `xclip`; actually uses `pbcopy` on macOS / `xclip` on Linux).
+- **Top-level imports**: Moved `tempfile` and `os` imports from function bodies to module top level for clarity and lint compliance.
+
+---
+
+## 0.2.26040635 Alpha — Engine module split: orchestrator.py → 6 focused modules
+
+**Date:** 2026-04-08
+
+### Changes
+
+- **`orchestrator.py` split into focused modules**: The 1,200-line monolithic engine entry point was split into:
+  - `cli.py` — argument parsing and CLI entry point
+  - `engine_setup.py` — Chrome/CDP launch and browser lifecycle
+  - `tab_manager.py` — tab creation, reuse, and cleanup
+  - `prompt_loader.py` — prompt file loading and echo-signature extraction
+  - `status_writer.py` — `status.json` serialisation
+  - `retry_handler.py` — per-platform retry logic and error classification
+  - `orchestrator.py` — retained as the parallel dispatch coordinator (slimmed)
+- **`platforms/base.py` split**: Extracted `inject_utils.py` (prompt injection helpers) and `browser_utils.py` (navigation and popup handling) from the base platform class.
+- **`platforms/chatgpt.py` split**: Extracted `chatgpt_extractor.py` (response extraction logic) as a `ChatGPTExtractorMixin`.
+- **13 unit tests added**: Tests for Gemini `completion_check`, DeepSeek `completion_check`, and ChatGPT rate-limit detection (`tests/` directory).
+- **Pre-release quality gate**: 4-stage quality gate enforced via Makefile before any release commit.
+
+---
+
+## 0.2.26040634 Alpha — Gemini DR bring_to_front before plan search; 45s wait_for_selector
+
+**Date:** 2026-04-08
+
+### Fixes
+
+- **Gemini DR plan not detected (race condition)**: `bring_to_front()` is now called before searching for the DR plan element, ensuring the tab is rendered before the selector runs.
+- **Selector timeout extended**: `wait_for_selector` for the DR plan confirmation bumped from 30s to 45s to accommodate slower Gemini plan generation.
+- **Broad "Start" fallback removed**: Removed an overly broad fallback that matched any "Start" button, which was causing false positives on non-DR pages.
+
+---
+
+## 0.2.26040633 Alpha — Gemini DR race condition: bring_to_front + 60s Stop confirmation
+
+**Date:** 2026-04-07
+
+### Fixes
+
+- **Gemini DR Stop confirmation race**: Added `bring_to_front()` before the Stop confirmation dialog check; extended Stop confirmation wait from 30s to 60s.
+- **Quick-response false-positive suppressed**: Suppressed the early-completion quick-response fallback during confirmed Deep Research mode to prevent premature exit.
+
+---
+
+## 0.2.26040632 Alpha — Gemini DR completion: Share & Export signal; remove Thinking false-positive
+
+**Date:** 2026-04-07
+
+### Fixes
+
+- **Gemini DR premature completion on "Thinking" indicator**: The "Thinking…" spinner text was matching a completion heuristic. Removed the false-positive match.
+- **Share & Export as DR completion signal**: Added detection of the Gemini "Share & export" button as a reliable signal that Deep Research has completed.
+
+---
+
+## 0.2.26040631 Alpha — Claude.ai DEEP: disable Research mode, use web search only
+
+**Date:** 2026-04-07
+
+### Fixes
+
+- **Claude.ai Research mode causes connector dialog blocking**: Enabling Research mode triggers a connector selection dialog that blocks automation. Fixed by disabling Research mode and enabling web search only in DEEP mode — avoids the dialog entirely while still providing enriched responses.
+
+---
+
+## 0.2.26040630 Alpha — DeepSeek stop vs send disambiguation via SVG rect + text-growth tracking
+
+**Date:** 2026-04-07
+
+### Fixes
+
+- **DeepSeek stop button false-positive**: Stop and Send share similar SVG structure. Added SVG `rect` discriminator and text-growth tracking — the stop button is only confirmed if response text has grown since the last poll, preventing premature stop detection on the send button.
+
+---
+
+## 0.2.26040629 Alpha — DeepSeek stop-button detection: JS DOM walk instead of :has-text()
+
+**Date:** 2026-04-06
+
+### Fixes
+
+- **DeepSeek stop button not detected**: The `:has-text()` selector failed on the DeepSeek stop button due to whitespace and nested element structure. Replaced with a JS DOM walk that inspects `innerText` directly on all candidate buttons, reliably finding the stop button regardless of nesting.
+
+---
+
 ## 0.2.26040628 Alpha — Claude.ai Research failure detection and connector dialog handling
 
 **Date:** 2026-04-06

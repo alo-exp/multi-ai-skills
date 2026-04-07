@@ -199,12 +199,23 @@ multai/
 │   │   ├── SKILL.md
 │   │   ├── platform-setup.md
 │   │   └── engine/           ← Playwright automation engine
-│   │       ├── orchestrator.py
+│   │       ├── cli.py            ← CLI entry point & arg parsing
+│   │       ├── orchestrator.py   ← Parallel dispatch coordinator
+│   │       ├── engine_setup.py   ← Chrome/CDP launch & lifecycle
+│   │       ├── tab_manager.py    ← Tab creation, reuse & cleanup
+│   │       ├── prompt_loader.py  ← Prompt loading & echo-sig extraction
+│   │       ├── status_writer.py  ← status.json serialisation
+│   │       ├── retry_handler.py  ← Per-platform retry & error classification
 │   │       ├── config.py
 │   │       ├── rate_limiter.py
 │   │       ├── agent_fallback.py
 │   │       ├── collate_responses.py
-│   │       └── platforms/    ← claude_ai.py chatgpt.py copilot.py …
+│   │       └── platforms/        ← per-platform automation classes
+│   │           ├── base.py
+│   │           ├── inject_utils.py      ← prompt injection helpers
+│   │           ├── browser_utils.py     ← navigation & popup handling
+│   │           ├── chatgpt_extractor.py ← ChatGPT extraction mixin
+│   │           └── claude_ai.py chatgpt.py copilot.py grok.py …
 │   ├── consolidator/         ← /consolidator skill — multi-source synthesis + CIR
 │   ├── landscape-researcher/ ← Market landscape workflow (internal)
 │   ├── solution-researcher/  ← Product deep-dive workflow (internal)

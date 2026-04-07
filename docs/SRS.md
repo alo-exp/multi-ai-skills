@@ -13,6 +13,7 @@
 | 3.2 | 2026-03-14 | Task-Name Output Organization + Auto-Collation (collate_responses.py, --task-name flag) |
 | 4.0 | 2026-03-16 | 5-skill architecture: landscape-researcher, engine owned by orchestrator, comparator owns matrix scripts, self-improving skills, domain enrichment from both researchers |
 | 4.1 | 2026-03-18 | Dependency bootstrap: setup.sh canonical installer; install.sh plugin hook delegate; SessionStart auto-install; orchestrator Phase 1 venv check |
+| 5.0 | 2026-04-08 | Engine module split: orchestrator.py → cli.py, engine_setup.py, tab_manager.py, prompt_loader.py, status_writer.py, retry_handler.py; platforms/base.py → inject_utils.py + browser_utils.py; chatgpt.py → ChatGPTExtractorMixin; 13 unit tests; pre-release quality gate |
 
 ---
 

@@ -13,6 +13,7 @@
 | 4.0 | 2026-03-16 | 5-skill architecture: landscape-researcher, engine owned by orchestrator, comparator owns matrix scripts, self-improving skills, domain knowledge sharing model, intent-based routing |
 | 4.1 | 2026-03-18 | Dependency bootstrap architecture: setup.sh, plugin hook chain, skills.sh install path, venv check |
 | 4.2 | 2026-03-18 | Platform resilience improvements: DR quota detection, blob interceptor robustness, stable-state fallbacks, prompt-echo coverage for all 7 platforms, expanded rate-limit patterns |
+| 5.0 | 2026-04-08 | Engine module split: orchestrator.py → cli.py, engine_setup.py, tab_manager.py, prompt_loader.py, status_writer.py, retry_handler.py; platforms/base.py → inject_utils.py + browser_utils.py; chatgpt.py → ChatGPTExtractorMixin; 13 unit tests added |
 
 ---
 
@@ -108,6 +109,9 @@ User → Orchestrator Skill (Router + Engine Owner)
 │  │         │                                                │   │
 │  │         └── platforms/                                   │   │
 │  │              ├── base.py  (lifecycle engine)              │   │
+│  │              ├── inject_utils.py  (injection helpers)     │   │
+│  │              ├── browser_utils.py  (nav & popup mgmt)    │   │
+│  │              ├── chatgpt_extractor.py  (extr. mixin)     │   │
 │  │              ├── claude_ai.py                             │   │
 │  │              ├── chatgpt.py                               │   │
 │  │              ├── copilot.py                               │   │
@@ -156,11 +160,21 @@ User → Orchestrator Skill (Router + Engine Owner)
 
 | Component | Responsibility | Domain Knowledge |
 |-----------|---------------|-----------------|
-| `skills/orchestrator/engine/orchestrator.py` | Chrome lifecycle, CLI parsing, parallel dispatch, staggered launch, auto-collation | None |
+| `skills/orchestrator/engine/cli.py` | CLI argument parsing and engine entry point | None |
+| `skills/orchestrator/engine/orchestrator.py` | Parallel platform dispatch coordinator | None |
+| `skills/orchestrator/engine/engine_setup.py` | Chrome/CDP launch and browser lifecycle | None |
+| `skills/orchestrator/engine/tab_manager.py` | Tab creation, reuse, and cleanup | None |
+| `skills/orchestrator/engine/prompt_loader.py` | Prompt file loading and echo-signature extraction | None |
+| `skills/orchestrator/engine/status_writer.py` | `status.json` serialisation | None |
+| `skills/orchestrator/engine/retry_handler.py` | Per-platform retry logic and error classification | None |
 | `skills/orchestrator/engine/rate_limiter.py` | Pre-flight budget checks, usage persistence, cooldowns, staggered ordering | None |
 | `skills/orchestrator/engine/collate_responses.py` | Merge per-platform raw response files into single archive; callable standalone | None |
 | `skills/orchestrator/engine/prompt_echo.py` | Extract prompt signatures, detect echoed prompts | None |
-| `skills/orchestrator/engine/platforms/*.py` | Per-platform UI automation (navigate, inject, extract) + rate limit detection | None |
+| `skills/orchestrator/engine/platforms/base.py` | Lifecycle engine base class | None |
+| `skills/orchestrator/engine/platforms/inject_utils.py` | Prompt injection helpers (mixin) | None |
+| `skills/orchestrator/engine/platforms/browser_utils.py` | Navigation, popup handling (mixin) | None |
+| `skills/orchestrator/engine/platforms/chatgpt_extractor.py` | ChatGPT response extraction (mixin) | None |
+| `skills/orchestrator/engine/platforms/{platform}.py` | Per-platform UI automation (navigate, inject, extract) + rate limit detection | None |
 | `skills/orchestrator/engine/agent_fallback.py` | Vision-based fallback when selectors break | None |
 | `skills/orchestrator/` | Workflow: intent routing (Phase 0) → dispatch to skill or run engine → collect results | None |
 | `skills/consolidator/` | Workflow: read responses → synthesize report + domain enrichment | Via consolidation guide |
