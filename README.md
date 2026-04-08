@@ -1,4 +1,4 @@
-# MultAI
+# MultAI · v0.3.0
 
 > **One skill. Seven AI platforms. Instant synthesis.**
 
