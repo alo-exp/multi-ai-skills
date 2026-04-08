@@ -23,7 +23,9 @@ COMPARATOR_DIR = str(Path(__file__).parent.parent / "skills" / "comparator")
 if COMPARATOR_DIR not in sys.path:
     sys.path.insert(0, COMPARATOR_DIR)
 
-from matrix_builder import build_matrix, TICK, DATA_START, HEADER_ROW, TITLE_ROW
+import unittest.mock
+
+from matrix_builder import build_matrix, main, TICK, DATA_START, HEADER_ROW, TITLE_ROW
 
 # ── Test config ────────────────────────────────────────────────────────────────
 
@@ -139,3 +141,46 @@ class TestMatrixBuilderEdgeCases:
         result, wb = _build(config)
         assert result["platforms_added"] == 0
         assert result["features"] == 1
+
+
+class TestMatrixBuilderCloneXlsx:
+    def test_build_matrix_with_clone_xlsx_warns(self, caplog):
+        """UT-MB-10: build_matrix logs warning when clone_xlsx is provided (line 176)."""
+        import logging
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            out = f.name
+        with caplog.at_level(logging.WARNING, logger="matrix_builder"):
+            result = build_matrix(SAMPLE_CONFIG, out, clone_xlsx="dummy.xlsx")
+        assert "clone_xlsx is not yet implemented" in caplog.text
+        assert result["platforms_added"] == 2
+
+
+class TestMatrixBuilderCLI:
+    def test_main_cli(self, tmp_path):
+        """UT-MB-11: main() CLI builds matrix from --config and --out args (lines 339-352)."""
+        config_file = tmp_path / "config.json"
+        config_file.write_text(json.dumps(SAMPLE_CONFIG))
+        out_file = tmp_path / "output.xlsx"
+        with unittest.mock.patch("sys.argv", [
+            "matrix_builder",
+            "--config", str(config_file),
+            "--out", str(out_file),
+        ]):
+            main()
+        assert out_file.exists()
+        wb = openpyxl.load_workbook(str(out_file))
+        assert wb.active.cell(1, 1).value == "Test Matrix"
+
+    def test_main_cli_with_clone_style(self, tmp_path):
+        """UT-MB-12: main() CLI with --clone-style arg still builds the matrix."""
+        config_file = tmp_path / "config.json"
+        config_file.write_text(json.dumps(SAMPLE_CONFIG))
+        out_file = tmp_path / "output.xlsx"
+        with unittest.mock.patch("sys.argv", [
+            "matrix_builder",
+            "--config", str(config_file),
+            "--out", str(out_file),
+            "--clone-style", "dummy.xlsx",
+        ]):
+            main()
+        assert out_file.exists()
