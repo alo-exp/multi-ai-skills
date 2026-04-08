@@ -105,8 +105,7 @@ jobs:
           python skills/landscape-researcher/launch_report.py --report-dir test --report-file "Test.md" --no-browser
 
       - name: Dependency vulnerability scan
-        run: pip-audit -r skills/orchestrator/engine/requirements.txt
-        continue-on-error: true
+        run: pip-audit -r skills/orchestrator/engine/requirements.txt --desc --severity HIGH
 
       - name: Secret detection
         run: |

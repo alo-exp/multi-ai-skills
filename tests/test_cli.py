@@ -157,6 +157,18 @@ class TestParseArgs:
             args = _cli.parse_args()
         assert args.chrome_profile == "Work"
 
+    def test_sanitise_chrome_profile_clean(self):
+        """_sanitise_chrome_profile allows alphanumeric, hyphen, underscore, space."""
+        assert _cli._sanitise_chrome_profile("MultAI-2 Work") == "MultAI-2 Work"
+
+    def test_sanitise_chrome_profile_strips_special(self):
+        """_sanitise_chrome_profile replaces invalid chars with hyphen."""
+        assert _cli._sanitise_chrome_profile("../../bad") == "------bad"
+
+    def test_sanitise_chrome_profile_empty_fallback(self):
+        """_sanitise_chrome_profile falls back to 'MultAI' when result is empty after strip."""
+        assert _cli._sanitise_chrome_profile("   ") == "MultAI"
+
     def test_parse_args_output_dir(self):
         """parse_args accepts --output-dir."""
         with patch("sys.argv", ["cli.py", "--prompt", "x", "--output-dir", "/tmp/out"]):
@@ -507,3 +519,25 @@ class TestMain:
             _cli.main()
         # No exception propagated — test passes if we reach here
         tmp_prompt_path.unlink(missing_ok=True)
+
+    def test_main_warns_when_default_profile_used(self, caplog):
+        """main() emits a warning when chrome_profile is 'Default'."""
+        import logging
+        import pytest
+
+        mock_args = MagicMock()
+        mock_args.budget = True          # exit early — no orchestrate needed
+        mock_args.chrome_profile = "Default"
+        mock_args.task_name = ""
+        mock_args.output_dir = str(Path(__file__).parent.parent / "reports")
+        mock_args.mode = "REGULAR"
+        mock_args.tier = "free"
+
+        with patch.object(_cli, "parse_args", return_value=mock_args), \
+             patch.object(_cli, "_resolve_output_dir", return_value="/tmp/out"), \
+             patch.object(_cli, "show_budget"), \
+             caplog.at_level(logging.WARNING, logger="cli"), \
+             pytest.raises(SystemExit):
+            _cli.main()
+
+        assert any("Default" in rec.message for rec in caplog.records)

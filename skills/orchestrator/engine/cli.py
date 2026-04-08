@@ -55,8 +55,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--output-dir", default=_DEFAULT_OUTPUT_DIR,
                    help="Output directory for raw responses (default: <project-root>/reports/). "
                         "Overridden by --task-name if both are supplied.")
-    p.add_argument("--chrome-profile", default="Default",
-                   help="Chrome profile directory name (default: Default)")
+    p.add_argument("--chrome-profile", default="MultAI",
+                   help="Chrome profile directory name (default: MultAI). "
+                        "Using 'Default' is discouraged — it grants access to your primary browser profile.")
     p.add_argument("--headless", action="store_true",
                    help="Run browsers headlessly (not recommended — some platforms block headless)")
     p.add_argument("--platforms", default="all",
@@ -104,6 +105,11 @@ def show_budget(args: argparse.Namespace) -> None:
     print()
 
 
+def _sanitise_chrome_profile(profile: str) -> str:
+    """Sanitise the Chrome profile name: allow alphanumeric, hyphen, underscore, space."""
+    return "".join(c if c.isalnum() or c in "-_ " else "-" for c in profile).strip() or "MultAI"
+
+
 def _resolve_output_dir(args: argparse.Namespace) -> str:
     """Resolve the effective output directory."""
     if args.task_name:
@@ -117,7 +123,7 @@ def _resolve_output_dir(args: argparse.Namespace) -> str:
             f"--output-dir must be within the project root ({_PROJECT_ROOT}). Got: {resolved}"
         )
         sys.exit(1)
-    return args.output_dir
+    return str(resolved)
 
 
 def main():
@@ -128,7 +134,14 @@ def main():
     )
 
     args = parse_args()
+    args.chrome_profile = _sanitise_chrome_profile(args.chrome_profile)
     effective_output_dir = _resolve_output_dir(args)
+
+    if args.chrome_profile == "Default":
+        log.warning(
+            "Running with Chrome profile 'Default' (your primary profile). "
+            "For better isolation, use --chrome-profile MultAI to create a dedicated profile."
+        )
 
     if args.budget:
         show_budget(args)
