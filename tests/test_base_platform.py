@@ -134,6 +134,10 @@ class TestRunLifecycle(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         BasePlatform, PlatformResult, _SignInRequired, _RateLimited = _setup()
+        # Stub inject_prompt on BasePlatform to avoid real clipboard/subprocess
+        # calls on CI (Linux has no pbpaste/xclip). Injection is tested separately
+        # in TestInjectPrompt which patches the lower-level helpers.
+        BasePlatform.inject_prompt = AsyncMock()
         self.BasePlatform = BasePlatform
         self.PlatformResult = PlatformResult
         self._SignInRequired = _SignInRequired
