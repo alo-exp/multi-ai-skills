@@ -420,6 +420,7 @@ class TestOrchestrate:
 
         with patch("orchestrator._launch_chrome", new=AsyncMock(return_value=(MagicMock(), MagicMock(), None))), \
              patch("orchestrator._run_all_platforms", new=AsyncMock(return_value=fake_results)), \
+             patch("orchestrator._ensure_playwright_data_dir", return_value="/tmp/pw-data"), \
              patch("orchestrator.async_playwright") as mock_apw, \
              patch("orchestrator.Path.mkdir"), \
              patch("orchestrator.Path.exists", return_value=False):
@@ -464,6 +465,7 @@ class TestOrchestrate:
         with patch("orchestrator.async_playwright") as mock_apw, \
              patch("orchestrator.Path.mkdir"), \
              patch("orchestrator.Path.exists", return_value=False), \
+             patch("orchestrator._ensure_playwright_data_dir", return_value="/tmp/pw-data"), \
              patch("orchestrator._launch_chrome", new=AsyncMock(return_value=(browser_mock, MagicMock(), None))), \
              patch("orchestrator._run_all_platforms", new=AsyncMock(return_value=fake_results)):
             cm = MagicMock()
@@ -493,6 +495,7 @@ class TestOrchestrate:
              patch("orchestrator.async_playwright") as mock_apw, \
              patch("orchestrator.Path.mkdir"), \
              patch("orchestrator.Path.exists", return_value=False), \
+             patch("orchestrator._ensure_playwright_data_dir", return_value="/tmp/pw-data"), \
              patch("orchestrator._launch_chrome", new=AsyncMock(return_value=(browser_mock, MagicMock(), None))), \
              patch("orchestrator._run_all_platforms", new=AsyncMock(return_value=fake_results)) as mock_run_all:
             cm = MagicMock()
