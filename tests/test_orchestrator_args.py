@@ -2,12 +2,12 @@
 
 Tests UT-OR-01 through UT-OR-12.
 
-NOTE: orchestrator.py has module-level side effects (_ensure_venv, _ensure_dependencies)
-that call subprocess.run and os.execv. We mock these to prevent them from firing.
+NOTE: parse_args and _resolve_output_dir live in cli.py (engine package).
+      cli.py imports engine_setup at module level and calls _ensure_venv()
+      and _ensure_dependencies().  We stub those out via sys.modules before
+      importing cli so the side effects never fire.
 """
 
-import importlib
-import os
 import sys
 import types
 import unittest.mock
@@ -16,40 +16,29 @@ from pathlib import Path
 # Engine directory
 ENGINE_DIR = str(Path(__file__).parent.parent / "skills" / "orchestrator" / "engine")
 
-# We need to import orchestrator while blocking its module-level side effects.
-# The module calls _ensure_venv() and _ensure_dependencies() at module level,
-# and after that imports from playwright and other engine modules.
-# Strategy: We'll patch the functions before import, and mock unavailable modules.
 
+def _import_cli():
+    """Import cli module with all side-effecting dependencies neutralised."""
+    if "cli" in sys.modules:
+        return sys.modules["cli"]
 
-def _import_orchestrator():
-    """Import orchestrator module while neutralizing side effects."""
-    if "orchestrator" in sys.modules:
-        return sys.modules["orchestrator"]
-
-    # Add engine dir to path
+    # Add engine dir to path so that `import cli` finds the right file
     if ENGINE_DIR not in sys.path:
         sys.path.insert(0, ENGINE_DIR)
 
-    # Read the source and exec it with mocked functions
-    src_path = Path(ENGINE_DIR) / "orchestrator.py"
-    source = src_path.read_text(encoding="utf-8")
+    # --- Stub engine_setup to prevent venv/dependency bootstrap ---
+    mock_engine_setup = types.ModuleType("engine_setup")
+    mock_engine_setup._load_dotenv = lambda: None
+    mock_engine_setup._ensure_venv = lambda: None
+    mock_engine_setup._ensure_dependencies = lambda: None
+    sys.modules["engine_setup"] = mock_engine_setup
 
-    # Create a mock module for playwright
-    mock_playwright = types.ModuleType("playwright")
-    mock_async_api = types.ModuleType("playwright.async_api")
-    mock_async_api.async_playwright = unittest.mock.MagicMock()
-    mock_async_api.BrowserContext = unittest.mock.MagicMock()
-    mock_playwright.async_api = mock_async_api
-    sys.modules["playwright"] = mock_playwright
-    sys.modules["playwright.async_api"] = mock_async_api
+    # --- Stub heavy runtime deps ---
+    for mod_name in ("playwright", "playwright.async_api", "agent_fallback",
+                     "browser_use", "anthropic"):
+        if mod_name not in sys.modules:
+            sys.modules[mod_name] = types.ModuleType(mod_name)
 
-    # Create mock for agent_fallback
-    mock_agent = types.ModuleType("agent_fallback")
-    mock_agent.AgentFallbackManager = unittest.mock.MagicMock()
-    sys.modules["agent_fallback"] = mock_agent
-
-    # Create mock for platforms
     mock_platforms = types.ModuleType("platforms")
     mock_platforms.ALL_PLATFORMS = {
         "claude_ai": unittest.mock.MagicMock(),
@@ -62,29 +51,22 @@ def _import_orchestrator():
     }
     sys.modules["platforms"] = mock_platforms
 
-    # Patch _ensure_venv and _ensure_dependencies to be no-ops
-    # We'll replace the calls in the source with pass statements
-    modified_source = source.replace(
-        "_ensure_venv()            # Create .venv/ and re-exec if not already in a venv",
-        "pass  # _ensure_venv() skipped in test"
-    ).replace(
-        "_ensure_dependencies()    # pip install missing packages (safe inside venv)",
-        "pass  # _ensure_dependencies() skipped in test"
-    )
+    # config.py, rate_limiter, prompt_loader are real modules in ENGINE_DIR —
+    # don't stub them; sys.path already points there so they import fine.
 
-    # Compile and exec
-    module = types.ModuleType("orchestrator")
-    module.__file__ = str(src_path)
-    code = compile(modified_source, str(src_path), "exec")
-    exec(code, module.__dict__)
+    import cli  # noqa: PLC0415
 
-    sys.modules["orchestrator"] = module
-    return module
+    # Clean up stub keys that would pollute other test modules.
+    # Keep only "cli" and the mocks that are genuinely unavailable at test time.
+    for _key in ("engine_setup",):
+        sys.modules.pop(_key, None)
+
+    return cli
 
 
-# Import orchestrator with mocks
-orchestrator = _import_orchestrator()
-parse_args = orchestrator.parse_args
+cli_module = _import_cli()
+parse_args = cli_module.parse_args
+_resolve_output_dir = cli_module._resolve_output_dir
 
 
 class TestOrchestratorArgs:
@@ -94,8 +76,6 @@ class TestOrchestratorArgs:
         """UT-OR-01: --prompt or --prompt-file is required."""
         import pytest
         with pytest.raises(SystemExit):
-            parse_args.__wrapped__ if hasattr(parse_args, '__wrapped__') else None
-            # argparse calls sys.exit on error
             with unittest.mock.patch("sys.argv", ["orchestrator.py"]):
                 parse_args()
 
@@ -135,7 +115,7 @@ class TestOrchestratorArgs:
         """UT-OR-07: _resolve_output_dir with task-name returns reports/<task-name>."""
         with unittest.mock.patch("sys.argv", ["orchestrator.py", "--prompt", "test", "--task-name", "My Run"]):
             args = parse_args()
-        resolved = orchestrator._resolve_output_dir(args)
+        resolved = _resolve_output_dir(args)
         assert resolved.endswith("reports/My Run"), f"Expected path ending with 'reports/My Run', got: {resolved}"
 
     def test_ut_or_08_platforms_default_all(self):
