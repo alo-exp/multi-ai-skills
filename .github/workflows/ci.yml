@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r skills/orchestrator/engine/requirements.txt
-          pip install pytest pytest-cov pip-audit
+          pip install pytest pytest-cov pytest-asyncio pip-audit
 
       - name: Compile check — engine + skill files
         run: |
