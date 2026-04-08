@@ -65,8 +65,8 @@ jobs:
           ! grep -ri --include="*.py" --exclude-dir=.venv --exclude-dir=__pycache__ "devops" skills/orchestrator/engine/
           ! grep -r "_PROMPT_SIGS" skills/orchestrator/engine/platforms/*.py
 
-          # 7 platforms have check_rate_limit
-          test "$(grep -l 'check_rate_limit' skills/orchestrator/engine/platforms/*.py | grep -v base.py | wc -l | tr -d ' ')" = "7"
+          # 7 platform drivers have check_rate_limit (excludes base.py and helper files)
+          test "$(grep -l 'check_rate_limit' skills/orchestrator/engine/platforms/*.py | grep -v base.py | grep -v browser_utils.py | grep -v chatgpt_extractor.py | wc -l | tr -d ' ')" = "7"
 
           # RATE_LIMITS config completeness
           python -c "
