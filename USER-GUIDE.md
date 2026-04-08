@@ -287,6 +287,7 @@ MultAI has two research modes:
 
 | Resource | Description |
 |----------|-------------|
+| [Help Center](https://alo-exp.github.io/multai/help/) | Live documentation — installation, concepts, CLI reference, and troubleshooting |
 | [CONTRIBUTOR-GUIDE.md](CONTRIBUTOR-GUIDE.md) | Technical reference for contributors — CLI details, platform internals, adding new platforms, tests, CI/CD |
 | [GitHub Repository](https://github.com/alo-exp/multai) | Source code, issues, and releases |
 | [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code) | How to use Claude Code (the tool MultAI runs inside) |
