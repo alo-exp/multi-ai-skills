@@ -51,3 +51,28 @@ include = ["skills*", "tests*", "domains*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.md", "*.json", "*.txt", "*.html", "*.py"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = [
+    "skills/orchestrator/engine",
+    "skills/comparator",
+    "skills/landscape-researcher",
+]
+omit = [
+    "*/.*",
+    "*/.venv/*",
+    "*/site-packages/*",
+    "skills/orchestrator/engine/tests/*",
+]
+
+[tool.coverage.report]
+fail_under = 100
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

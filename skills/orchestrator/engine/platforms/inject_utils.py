@@ -68,7 +68,7 @@ class InjectMixin:
         elif sys.platform == "win32":
             subprocess.run(["clip"], input=prompt.encode("utf-16-le"), timeout=5, check=True)
         else:
-            raise RuntimeError(f"Unsupported platform for clipboard paste: {sys.platform}")
+            raise RuntimeError(f"Unsupported platform for clipboard paste: {sys.platform}")  # pragma: no cover
 
         await page.evaluate("""
             (() => {

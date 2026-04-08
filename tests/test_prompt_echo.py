@@ -104,6 +104,10 @@ class TestIsPromptEcho:
         # With default sample_size=3000, the sig at position 4000 should not be found
         assert is_prompt_echo(text, sigs, sample_size=3000) is False
 
+    def test_is_prompt_echo_empty_sigs(self):
+        """is_prompt_echo returns False when prompt_sigs is empty."""
+        assert is_prompt_echo("any text here", []) is False
+
     def test_ut_pe_08_backward_compat_key_phrases(self):
         """UT-PE-08: Current sample-research-prompt.md produces expected key sigs."""
         prompt = (FIXTURES / "sample-research-prompt.md").read_text(encoding="utf-8")

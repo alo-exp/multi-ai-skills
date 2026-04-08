@@ -132,7 +132,7 @@ def _verify_playwright(python_exe: str) -> None:
     if pw_version:
         try:
             stamp_file.write_text(pw_version, encoding="utf-8")
-        except Exception:
+        except Exception:  # pragma: no cover
             pass  # Non-fatal — will just re-verify next time
 
 
@@ -169,7 +169,7 @@ def _ensure_dependencies() -> None:
         except subprocess.CalledProcessError:
             print("  ERROR: Failed to install playwright. Install manually:")
             print("    pip install playwright==1.58.0")
-            sys.exit(1)
+            sys.exit(1)  # pragma: no cover
         print("  Installing Chromium browser (one-time download, ~130 MB)...")
         try:
             subprocess.check_call(
@@ -178,7 +178,7 @@ def _ensure_dependencies() -> None:
         except subprocess.CalledProcessError:
             print("  ERROR: Failed to install Chromium. Install manually:")
             print("    python3 -m playwright install chromium")
-            sys.exit(1)
+            sys.exit(1)  # pragma: no cover
         installed = True
 
     # Verify playwright import and Chromium availability
