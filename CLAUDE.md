@@ -38,8 +38,8 @@ Seven layers enforce compliance:
 **Trivial changes** (typos, copy fixes, config tweaks): Automatically
 detected by hooks. Small edits (<300 chars) and non-logic files (.md,
 .txt, .css, .svg, etc.) skip enforcement per-edit. No action needed.
-**Note**: In the `devops-cycle` workflow, `.yml`, `.yaml`, `.json`, and
-`.toml` files are infrastructure code and are NOT auto-exempted.
+**Note**: In CI/infrastructure changes (`.yml`, `.yaml`, `.json`, and
+`.toml` files), treat these as infrastructure code — they are NOT auto-exempted.
 
 **Subagent commits**: Every git commit MUST use HEREDOC format and end with:
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
@@ -55,6 +55,13 @@ the active workflow file before starting any non-trivial task.
 
 **Skill not found rule**: If a skill listed in the workflow cannot be
 invoked, STOP and notify the user immediately. Do NOT silently skip.
+
+---
+
+## 2a. Browser Interaction
+
+**Always use `mcp__Claude_in_Chrome__*` tools for any browser/Chrome interaction.**
+Never use `mcp__computer-use__*` tools for browser tasks — computer-use Chrome access is restricted and will be denied.
 
 ---
 
@@ -90,15 +97,16 @@ GSD steps MUST be invoked as slash commands in the correct phase order.
 
 ## 3a. Review Loop Enforcement
 
-Every review loop (spec review, plan review, code review, verification) **MUST iterate until the reviewer returns ✅ Approved**. There are NO exceptions.
+Every review loop (spec review, plan review, code review, verification) **MUST iterate until the reviewer returns ✅ Approved TWICE IN A ROW**. A single clean pass is not sufficient — the reviewer must find no issues on two consecutive passes. There are NO exceptions.
 
 You MUST NOT:
 - Stop a review loop because "issues are minor"
 - Stop because "it's close enough"
 - Accept a partial fix and move on without re-dispatching
 - Count a round as approved unless the reviewer explicitly outputs `✅ Approved`
+- Stop after a single clean pass — two consecutive clean passes are required
 
-Maximum 3 iterations before surfacing to the user for guidance — but you MUST reach that maximum before giving up, not stop early. If iteration 3 still returns issues, surface to the user with the remaining issue list and wait for direction.
+The loop is self-limiting: it ends when two consecutive clean passes are produced. If three or more consecutive iterations produce issues, surface to the user with the remaining issue list and wait for direction.
 
 ---
 

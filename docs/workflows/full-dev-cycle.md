@@ -178,9 +178,10 @@ Write results to `## Skills flagged at discovery` in the session log. **Do not i
 
 8. `/code-review` — Peer code quality review (security, perf, correctness,           **REQUIRED** ← DO NOT SKIP
    readability — distinct from GSD's goal verification).
-   `superpowers:code-reviewer` — Run code-reviewer subagent immediately after.
-   **Review loop rule**: re-dispatch reviewer until it returns ✅ Approved. Max 3 iterations
-   before surfacing remaining issues to user. Never stop early on "minor" issues.
+   `/superpowers:code-reviewer` — Run code-reviewer subagent immediately after.
+   **Review loop rule**: re-dispatch reviewer until it returns ✅ Approved TWICE IN A ROW.
+   Two consecutive clean passes required. If 3+ consecutive iterations produce issues,
+   surface remaining issues to user. Never stop early on "minor" issues.
 
 9. `/requesting-code-review` — Request external or peer review.                      **REQUIRED** ← DO NOT SKIP
 
@@ -213,10 +214,10 @@ Write results to `## Skills flagged at discovery` in the session log. **Do not i
 15. `/documentation` — Update or create all project documentation.                   **REQUIRED** ← DO NOT SKIP
     Minimum required files:
     - `README.md` — MUST reflect current version, features, and changes before release
-    - `docs/Master-PRD.md`
+    - `docs/SRS.md`
     - `docs/Architecture-and-Design.md`
     - `docs/Testing-Strategy-and-Plan.md`
-    - `docs/CICD.md`
+    - `docs/CICD-Strategy-and-Plan.md`
 
     **Additional required at this step:**
     - Update `docs/KNOWLEDGE.md` Part 2: append dated entries to Architecture patterns,

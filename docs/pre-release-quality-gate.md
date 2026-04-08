@@ -33,7 +33,7 @@ Run all three review skills in sequence, then fix all issues. Repeat until clean
 Review the entire plugin for cross-file inconsistencies, redundancies, and contradictions.
 
 1. Dispatch parallel Explore agents across five dimensions:
-   - **Workflows**: full-dev-cycle.md vs devops-cycle.md vs CLAUDE.md vs silver-bullet.md
+   - **Workflows**: full-dev-cycle.md vs CLAUDE.md
    - **Skills**: all SKILL.md files — obsolete references, redundant work, contradictions
    - **Hooks + config**: .sh files, hooks.json, .silver-bullet.json, templates
    - **Help site + README**: HTML pages, search.js, README.md — step counts, paths, versions
