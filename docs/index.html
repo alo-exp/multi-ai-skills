@@ -21,7 +21,7 @@
 <meta name="twitter:image" content="https://multai.alolabs.dev/assets/og/og-main.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Roboto:ital,wght@0,300;0,400;0,700;1,400&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ───── RESET ───── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -52,7 +52,7 @@ html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
   --radius-lg:20px;
   --radius-sm:8px;
   --font-heading:'Space Grotesk',system-ui,sans-serif;
-  --font-body:'Plus Jakarta Sans',system-ui,sans-serif;
+  --font-body:'Roboto',system-ui,sans-serif;
   --font-sans:var(--font-body);
   --font-mono:'Roboto Mono',monospace;
   --shadow-lg:0 20px 60px rgba(0,0,0,.08);
@@ -234,7 +234,7 @@ nav .nav-cta:hover{background:var(--accent-light);box-shadow:0 0 20px rgba(99,10
 .arch-diagram{
   background:var(--bg-code);border:1px solid var(--border);
   border-radius:var(--radius);padding:32px;
-  font-family:var(--font-mono);font-size:.9rem;
+  font-family:var(--font-mono);font-size: 1rem;
   line-height:1.8;color:var(--text-secondary);
   overflow-x:auto;white-space:pre;
   max-width:700px;margin:0 auto;
@@ -314,7 +314,7 @@ section:nth-child(even){background:var(--section-alt)}
 .skill-card:hover{border-color:var(--border-hover);box-shadow:var(--shadow-glow)}
 .skill-header{padding:28px 28px 0}
 .skill-header .skill-name{
-  font-family:var(--font-mono);font-size:.9rem;
+  font-family:var(--font-mono);font-size: 1rem;
   color:var(--accent-light);margin-bottom:4px;font-weight:600;
 }
 .skill-header h3{font-size:1.25rem;font-weight:700;margin-bottom:8px}
@@ -355,7 +355,7 @@ section:nth-child(even){background:var(--section-alt)}
   height:2px;background:var(--accent);border-radius:2px;
 }
 .install-code{
-  padding:24px;font-family:var(--font-mono);font-size:.9rem;
+  padding:24px;font-family:var(--font-mono);font-size: 1rem;
   line-height:2;color:var(--text-secondary);display:none;
 }
 .install-code.active{display:block}
@@ -424,7 +424,7 @@ section:nth-child(even){background:var(--section-alt)}
 .code-block{
   background:var(--bg-code);border:1px solid var(--border);
   border-radius:var(--radius-sm);padding:20px 24px;
-  font-family:var(--font-mono);font-size:.9rem;
+  font-family:var(--font-mono);font-size: 1rem;
   line-height:1.8;color:var(--text-secondary);
   overflow-x:auto;
 }
@@ -478,7 +478,7 @@ footer .footer-links{display:flex;gap:24px}
   .container{padding:0 16px}
   .arch-diagram{padding:16px;font-size:.75rem}
   .install-block{overflow-x:auto}
-  .install-code{font-size:.87rem;padding:16px}
+  ..95rem;padding:16px}
   .comparison-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .comparison-table{min-width:480px}
   .callout{padding:20px 16px}
@@ -828,7 +828,7 @@ footer .footer-links{display:flex;gap:24px}
     <div class="grid grid-2 mt-6">
       <div class="feature-card fade-in">
         <span class="tag tag-pink mb-2">Landscape Research</span>
-        <div class="code-block mt-2" style="font-size:.9rem">
+        <div class="code-block mt-2" rem">
 <span class="string">"Run a market landscape analysis of Internal Developer Platforms for platform engineering teams"</span>
 
 <span class="comment">&#8594; 9-section report + Top 20 vendors</span>
@@ -837,7 +837,7 @@ footer .footer-links{display:flex;gap:24px}
       </div>
       <div class="feature-card fade-in">
         <span class="tag tag-cyan mb-2">Solution Research</span>
-        <div class="code-block mt-2" style="font-size:.9rem">
+        <div class="code-block mt-2" rem">
 <span class="string">"Research Humanitec.com &#8212; I want a Competitive Intelligence Report covering their IDP capabilities"</span>
 
 <span class="comment">&#8594; Competitive Intelligence Report</span>
@@ -846,7 +846,7 @@ footer .footer-links{display:flex;gap:24px}
       </div>
       <div class="feature-card fade-in">
         <span class="tag tag-amber mb-2">Comparator</span>
-        <div class="code-block mt-2" style="font-size:.9rem">
+        <div class="code-block mt-2" rem">
 <span class="string">"Add Spinnaker to the comparison matrix based on the latest CIR"</span>
 
 <span class="comment">&#8594; Extracts capabilities from CIR</span>
@@ -855,7 +855,7 @@ footer .footer-links{display:flex;gap:24px}
       </div>
       <div class="feature-card fade-in">
         <span class="tag tag-green mb-2">Direct Multi-AI</span>
-        <div class="code-block mt-2" style="font-size:.9rem">
+        <div class="code-block mt-2" rem">
 <span class="string">"What are the main trade-offs between microservices and monoliths?"</span>
 
 <span class="comment">&#8594; All 7 platforms queried in parallel</span>
