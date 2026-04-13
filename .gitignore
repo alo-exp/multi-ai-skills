@@ -40,3 +40,4 @@ env/
 # comparison matrices, status files produced during test/real runs)
 # Source files at reports/ root (preview.html, serve.py) remain tracked.
 reports/*/
+.claude/worktrees/
