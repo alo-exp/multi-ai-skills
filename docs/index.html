@@ -62,6 +62,21 @@ html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
   --section-alt:rgba(241,245,249,.6);
   --table-row-hover:rgba(99,102,241,.03);
   --skill-phase-border:rgba(226,232,240,.8);
+  --accent-subtle:rgba(99,102,241,.06);
+  --accent-bg:rgba(99,102,241,.08);
+  --accent-bg-med:rgba(99,102,241,.12);
+  --accent-bg-strong:rgba(99,102,241,.15);
+  --accent-border:rgba(99,102,241,.2);
+  --accent-border-strong:rgba(99,102,241,.25);
+  --accent-shadow:rgba(99,102,241,.3);
+  --accent-shadow-lg:rgba(99,102,241,.4);
+  --accent2-bg-subtle:rgba(167,139,250,.06);
+  --accent2-bg-med:rgba(167,139,250,.12);
+  --neutral-bg:rgba(107,114,128,.1);
+  --green-bg:rgba(52,211,153,.12);
+  --amber-bg:rgba(251,191,36,.12);
+  --pink-bg:rgba(244,114,182,.12);
+  --cyan-bg:rgba(34,211,238,.12);
 }
 
 /* ───── DARK THEME ───── */
@@ -92,6 +107,21 @@ html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
   --section-alt:rgba(18,18,26,.4);
   --table-row-hover:rgba(99,102,241,.03);
   --skill-phase-border:rgba(30,41,59,.5);
+  --accent-subtle:rgba(99,102,241,.06);
+  --accent-bg:rgba(99,102,241,.08);
+  --accent-bg-med:rgba(99,102,241,.12);
+  --accent-bg-strong:rgba(99,102,241,.15);
+  --accent-border:rgba(99,102,241,.2);
+  --accent-border-strong:rgba(99,102,241,.25);
+  --accent-shadow:rgba(99,102,241,.3);
+  --accent-shadow-lg:rgba(99,102,241,.4);
+  --accent2-bg-subtle:rgba(167,139,250,.06);
+  --accent2-bg-med:rgba(167,139,250,.12);
+  --neutral-bg:rgba(107,114,128,.1);
+  --green-bg:rgba(52,211,153,.12);
+  --amber-bg:rgba(251,191,36,.12);
+  --pink-bg:rgba(244,114,182,.12);
+  --cyan-bg:rgba(34,211,238,.12);
 }
 
 /* ───── THEME TRANSITION ───── */
@@ -120,11 +150,11 @@ h1,h2,h3,h4,h5,h6,.logo,.section-title,.section-label,.tagline,.btn,.tag,.nav-ct
 .mt-2{margin-top:16px}.mt-3{margin-top:24px}.mt-4{margin-top:32px}.mt-6{margin-top:48px}.mt-8{margin-top:64px}
 .mb-2{margin-bottom:16px}.mb-4{margin-bottom:32px}
 .tag{display:inline-block;padding:4px 12px;border-radius:999px;font-size:.75rem;font-weight:600;letter-spacing:.03em}
-.tag-purple{background:rgba(99,102,241,.15);color:var(--accent-light)}
-.tag-green{background:rgba(52,211,153,.12);color:var(--green)}
-.tag-amber{background:rgba(251,191,36,.12);color:var(--amber)}
-.tag-pink{background:rgba(244,114,182,.12);color:var(--accent3)}
-.tag-cyan{background:rgba(34,211,238,.12);color:var(--cyan)}
+.tag-purple{background:var(--accent-bg-strong);color:var(--accent-light)}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-amber{background:var(--amber-bg);color:var(--amber)}
+.tag-pink{background:var(--pink-bg);color:var(--accent3)}
+.tag-cyan{background:var(--cyan-bg);color:var(--cyan)}
 
 /* ───── NAV ───── */
 nav{
@@ -156,7 +186,7 @@ nav .nav-cta{
   font-size:.9rem;font-weight:600;text-decoration:none;
   transition:all .2s;border:none;cursor:pointer;
 }
-nav .nav-cta:hover{background:var(--accent-light);box-shadow:0 0 20px rgba(99,102,241,.3)}
+nav .nav-cta:hover{background:var(--accent-light);box-shadow:0 0 20px var(--accent-shadow)}
 .nav-toggle{display:none;background:none;border:none;color:var(--text-primary);font-size:1.5rem;cursor:pointer}
 @media(max-width:768px){
   nav .nav-links{display:none}
@@ -178,17 +208,17 @@ nav .nav-cta:hover{background:var(--accent-light);box-shadow:0 0 20px rgba(99,10
 .hero::before{
   content:'';position:absolute;top:-200px;right:-200px;
   width:600px;height:600px;border-radius:50%;
-  background:radial-gradient(circle,rgba(99,102,241,.08) 0%,transparent 70%);
+  background:radial-gradient(circle,var(--accent-bg) 0%,transparent 70%);
 }
 .hero::after{
   content:'';position:absolute;bottom:-150px;left:-100px;
   width:500px;height:500px;border-radius:50%;
-  background:radial-gradient(circle,rgba(167,139,250,.06) 0%,transparent 70%);
+  background:radial-gradient(circle,var(--accent2-bg-subtle) 0%,transparent 70%);
 }
 .hero .container{position:relative;z-index:1}
 .hero .version-badge{
   display:inline-flex;align-items:center;gap:8px;
-  background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);
+  background:var(--accent-glow);border:1px solid var(--accent-border-strong);
   border-radius:999px;padding:6px 16px;font-size:.9rem;
   color:var(--accent-light);font-weight:500;margin-bottom:24px;
 }
@@ -219,10 +249,10 @@ nav .nav-cta:hover{background:var(--accent-light);box-shadow:0 0 20px rgba(99,10
 }
 .btn-primary{
   background:linear-gradient(135deg,var(--accent),#7c3aed);
-  color:#fff;box-shadow:0 4px 20px rgba(99,102,241,.3);
+  color:#fff;box-shadow:0 4px 20px var(--accent-shadow);
 }
 .btn-primary:hover{
-  box-shadow:0 8px 30px rgba(99,102,241,.4);transform:translateY(-2px);
+  box-shadow:0 8px 30px var(--accent-shadow-lg);transform:translateY(-2px);
 }
 .btn-outline{
   background:transparent;color:var(--text-primary);
@@ -435,8 +465,8 @@ section:nth-child(even){background:var(--section-alt)}
 
 /* ───── TESTIMONIAL / CALLOUT ───── */
 .callout{
-  background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(167,139,250,.05));
-  border:1px solid rgba(99,102,241,.2);
+  background:linear-gradient(135deg,var(--accent-bg),var(--accent2-bg-subtle));
+  border:1px solid var(--accent-border);
   border-radius:var(--radius-lg);padding:40px;
   text-align:center;max-width:700px;margin:0 auto;
 }
@@ -533,7 +563,7 @@ footer .footer-links{display:flex;gap:24px}
 <section class="hero text-center">
   <div class="container">
     <div class="version-badge"><span class="dot"></span> Claude Code/Cowork Plugin</div>
-    <h1><span style="position:relative;display:inline-block"><span class="gradient">MultAI</span><span style="position:absolute;top:.05em;left:calc(100% + 6px);font-size:.168em;font-weight:700;letter-spacing:.1em;padding:2px 6px;border-radius:4px;background:rgba(99,102,241,.15);color:var(--accent-light);border:1px solid rgba(99,102,241,.25);font-family:var(--font-sans);white-space:nowrap">ALPHA</span></span></h1>
+    <h1><span style="position:relative;display:inline-block"><span class="gradient">MultAI</span><span style="position:absolute;top:.05em;left:calc(100% + 6px);font-size:.168em;font-weight:700;letter-spacing:.1em;padding:2px 6px;border-radius:4px;background:var(--accent-bg-strong);color:var(--accent-light);border:1px solid var(--accent-border-strong);font-family:var(--font-sans);white-space:nowrap">ALPHA</span></span></h1>
     <p style="font-size:clamp(1.2rem,2.5vw,1.8rem);font-weight:600;color:var(--text-primary);margin-bottom:20px;letter-spacing:-.01em">Leverage the Knowledge and Intelligence of 7 Leading AIs at Once</p>
     <p class="subtitle">
       A Claude Code/Cowork plugin that submits research prompts to Claude.ai, ChatGPT, Copilot, Perplexity, Grok, DeepSeek &amp; Gemini in parallel &mdash; then synthesizes the results into structured reports, landscape analyses, and comparison matrices.
@@ -592,47 +622,47 @@ footer .footer-links{display:flex;gap:24px}
     </div>
     <div class="grid grid-3 mt-6">
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(99,102,241,.12);color:var(--accent-light)"><i data-lucide="settings-2"></i></div>
+        <div class="feature-icon" style="background:var(--accent-bg-med);color:var(--accent-light)"><i data-lucide="settings-2"></i></div>
         <h3>Intelligent Routing</h3>
         <p>Analyzes your intent and selects the right workflow automatically &mdash; no flags, no routing decisions, no skill names to remember.</p>
       </div>
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(52,211,153,.12);color:var(--green)"><i data-lucide="zap"></i></div>
+        <div class="feature-icon" style="background:var(--green-bg);color:var(--green)"><i data-lucide="zap"></i></div>
         <h3>Parallel Execution</h3>
         <p>All 7 platforms run concurrently via <code>asyncio.gather()</code>. A typical REGULAR-mode run completes in under 90 seconds.</p>
       </div>
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(244,114,182,.12);color:var(--accent3)"><i data-lucide="bar-chart-2"></i></div>
+        <div class="feature-icon" style="background:var(--pink-bg);color:var(--accent3)"><i data-lucide="bar-chart-2"></i></div>
         <h3>DEEP Research Mode</h3>
         <p>Activates each platform's research/think mode (Deep Research, DeepThink, etc.) for comprehensive answers with citations.</p>
       </div>
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(251,191,36,.12);color:var(--amber)"><i data-lucide="clipboard-list"></i></div>
+        <div class="feature-icon" style="background:var(--amber-bg);color:var(--amber)"><i data-lucide="clipboard-list"></i></div>
         <h3>Structured Reports</h3>
         <p>Raw responses from all 7 platforms are synthesized into structured deliverables &mdash; 9-section landscape reports, product intelligence reports, or free-form summaries.</p>
       </div>
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(34,211,238,.12);color:var(--cyan)"><i data-lucide="trending-up"></i></div>
+        <div class="feature-icon" style="background:var(--cyan-bg);color:var(--cyan)"><i data-lucide="trending-up"></i></div>
         <h3>XLSX Comparison Matrix</h3>
         <p>Maintain a capability matrix with weighted scores, combo columns, and auto-reordering. All via Python scripts.</p>
       </div>
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(167,139,250,.12);color:var(--accent2)"><i data-lucide="lock"></i></div>
+        <div class="feature-icon" style="background:var(--accent2-bg-med);color:var(--accent2)"><i data-lucide="lock"></i></div>
         <h3>Rate Limiting</h3>
         <p>Per-platform budgets, cooldowns, and daily caps &mdash; persisted across sessions. Never get rate-limited again.</p>
       </div>
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(244,114,182,.12);color:var(--accent3)"><i data-lucide="bot"></i></div>
+        <div class="feature-icon" style="background:var(--pink-bg);color:var(--accent3)"><i data-lucide="bot"></i></div>
         <h3>Agent Fallback</h3>
         <p>When a Playwright selector fails, a vision-based <code>browser-use</code> agent takes over &mdash; powered by Claude Sonnet or Gemini Flash.</p>
       </div>
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(52,211,153,.12);color:var(--green)"><i data-lucide="wrench"></i></div>
+        <div class="feature-icon" style="background:var(--green-bg);color:var(--green)"><i data-lucide="wrench"></i></div>
         <h3>Self-Improving</h3>
         <p>A timestamped run log is appended after every execution. Templates and scripts can be updated based on learnings from each run.</p>
       </div>
       <div class="feature-card fade-in">
-        <div class="feature-icon" style="background:rgba(99,102,241,.12);color:var(--accent-light)"><i data-lucide="globe"></i></div>
+        <div class="feature-icon" style="background:var(--accent-bg-med);color:var(--accent-light)"><i data-lucide="globe"></i></div>
         <h3>Shared Domain Knowledge</h3>
         <p><code>domains/{domain}.md</code> is enriched after every research run. New archetypes, terminology, and trends accumulate across sessions.</p>
       </div>
